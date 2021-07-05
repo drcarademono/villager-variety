@@ -1,7 +1,7 @@
 // Project:         Villager Variety mod for Daggerfall Unity (http://www.dfworkshop.net)
 // Copyright:       Copyright (C) 2021 Hazelnut
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
-// Authors:         Hazelnut & Carodemono
+// Authors:         Hazelnut & Carademono
 
 using System.IO;
 using UnityEngine;
@@ -13,6 +13,7 @@ using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Entity;
 using DaggerfallWorkshop.Game.Utility.ModSupport;
 using DaggerfallWorkshop.Utility.AssetInjection;
+using DaggerfallWorkshop.Utility;
 
 // NPC Sprite images should be named like this:
 // archive.face.variant_record-frame.png
@@ -27,7 +28,7 @@ namespace VillagerVariety
     [RequireComponent(typeof(MeshRenderer))]
     public class VillagerVarietyMobilePerson : MobilePersonAsset
     {
-        public const int NUM_VARIANTS = 3;
+        public const int NUM_VARIANTS = 1;
 
         private const string EMISSION = "_Emission";
 
@@ -219,13 +220,13 @@ namespace VillagerVariety
             int variant = Random.Range(0, NUM_VARIANTS);
             string season = seasonStrs[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue];
 
-// Carodemono: Testing lines to make all mobile NPCs a specific sprite - uncomment as required while testing (note: talk face wont match)
+// Carademono: Testing lines to make all mobile NPCs a specific sprite - uncomment as required while testing (note: talk face wont match)
             if (!isGuard)
             {
-                archive = 396;
-                personFaceRecordId = 158;
+                //archive = 396;
+                //personFaceRecordId = 158;
                 //variant = 1;
-                //season = "";
+                season = "";
             }
 
             Debug.LogFormat("Setting up villager variant: {0:000}.{1}.{2}{3}", archive, personFaceRecordId, variant, season);
@@ -313,7 +314,7 @@ namespace VillagerVariety
                 {
                     frameTextures[frame] = mod.GetAsset<Texture2D>(GetImageName(archive, record, frame, faceRecord, variant, season));
                     if (frameTextures[frame] == null)
-                        return null;    // Abort if any frame is missing
+                        frameTextures[frame] = ImageReader.GetTexture(fileName, record, frame, true);   // Use vanilla texture if no override
 
                     if (frameEmissionMaps != null)
                     {
