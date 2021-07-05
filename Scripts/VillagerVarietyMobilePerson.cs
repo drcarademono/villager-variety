@@ -12,9 +12,8 @@ using DaggerfallWorkshop;
 using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Entity;
 using DaggerfallWorkshop.Game.Utility.ModSupport;
-using DaggerfallWorkshop.Utility.AssetInjection;
 using DaggerfallWorkshop.Utility;
-using System.Collections.Generic;
+using DaggerfallWorkshop.Utility.AssetInjection;
 
 // NPC Sprite images should be named like this:
 // archive.face.variant_record-frame.png
@@ -24,12 +23,13 @@ using System.Collections.Generic;
 
 namespace VillagerVariety
 {
+    // Copied from DFU MobilePersonBillboard class and modified.
     [ImportedComponent]
     [RequireComponent(typeof(MeshFilter))]
     [RequireComponent(typeof(MeshRenderer))]
     public class VillagerVarietyMobilePerson : MobilePersonAsset
     {
-        public const int NUM_VARIANTS = 1;  // Number of variants to create, falls back to variant 0 if not present.
+        public const int NUM_VARIANTS = 1;  // Number of variants to generate, a variant falls back to 0 if no images found.
 
         private const string EMISSION = "_Emission";
 
@@ -367,6 +367,9 @@ namespace VillagerVariety
 
         void SetIdle(bool idle)
         {
+            if (idleAnims == null || moveAnims == null)
+                return;     // Protect against update() sequencing exception
+
             if (idle)
             {
                 // Switch animation state to idle
