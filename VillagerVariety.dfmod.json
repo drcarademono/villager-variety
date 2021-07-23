@@ -2,7 +2,8 @@
     "ModTitle": "VillagerVariety",
     "ModVersion": "0.5",
     "ModAuthor": "Hazelnut & carademono",
-    "DFUnity_Version": "0.11.4",
+    "ContactInfo": "forums.dfworkshop.net",
+    "DFUnity_Version": "0.11.5",
     "GUID": "417cf548-ece1-4fbb-a47d-2eacf0570709",
     "Files": [
         "Assets/Game/Mods/VillagerVariety/Textures/381/381.X.0/381.338.0_0-0.png",

@@ -33,6 +33,9 @@ namespace VillagerVariety
         public const int NUM_VARIANTS = 1;  // Number of variants to generate, a variant falls back to 0 if no images found.
 
         private const string EMISSION = "_Emission";
+        private const string EMISSIONMAP = "_EmissionMap";
+        private const string EMISSIONCOLOR = "_EmissionColor";
+
 
         private readonly static string[] seasonStrs = { "f", "p", "m", "w" };
 
@@ -294,8 +297,8 @@ namespace VillagerVariety
                 if (emmisionCache.ContainsKey(firstFrameName))
                 {
                     importedTextures.IsEmissive = true;
-                    material.EnableKeyword(KeyWords.Emission);
-                    material.SetColor(Uniforms.EmissionColor, Color.white);
+                    material.EnableKeyword(EMISSION);
+                    material.SetColor(EMISSIONCOLOR, Color.white);
                     importedTextures.EmissionMaps = emmisionCache[firstFrameName];
                 }
             }
@@ -326,8 +329,8 @@ namespace VillagerVariety
                 // Check whether there are emission textures (must exist for first frame)
                 if (importedTextures.IsEmissive = mod.HasAsset(GetImageName(archive, 0, 0, faceRecord, variant, season) + EMISSION))
                 {
-                    material.EnableKeyword(KeyWords.Emission);
-                    material.SetColor(Uniforms.EmissionColor, Color.white);
+                    material.EnableKeyword(EMISSION);
+                    material.SetColor(EMISSIONCOLOR, Color.white);
                 }
 
                 // Import all textures in this archive
@@ -578,7 +581,7 @@ namespace VillagerVariety
                 // Assign imported texture
                 meshRenderer.sharedMaterial.mainTexture = importedTextures.Albedo[record][currentFrame];
                 if (importedTextures.IsEmissive)
-                    meshRenderer.material.SetTexture(Uniforms.EmissionMap, importedTextures.EmissionMaps[record][currentFrame]);
+                    meshRenderer.material.SetTexture(EMISSIONMAP, importedTextures.EmissionMaps[record][currentFrame]);
 
                 // Update UVs on mesh
                 Vector2[] uvs = new Vector2[4];
