@@ -30,7 +30,7 @@ namespace VillagerVariety
     [RequireComponent(typeof(MeshRenderer))]
     public class VillagerVarietyMobilePerson : MobilePersonAsset
     {
-        public const int NUM_VARIANTS = 1;  // Number of variants to generate, a variant falls back to 0 if no images found.
+        public const int NUM_VARIANTS = 2;  // Number of variants to generate, a variant falls back to 0 if no images found.
 
         private const string EMISSION = "_Emission";
         private const string EMISSIONMAP = "_EmissionMap";
