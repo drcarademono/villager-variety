@@ -1,0 +1,22 @@
+{
+    "Version": "1.0",
+    "Sections": [
+        {
+            "Name": "VIOCompatibility",
+            "Description": "If VIO Sprites mod is enabled this controls the amount of VIO sprites that will appear",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Min": 0,
+                    "Max": 100,
+                    "Value": 0,
+                    "Name": "vioAmount",
+                    "Description": "Sets the percentage of VIO sprites allowed to override Villager Variants from this mod",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                }
+            ],
+            "$version": "v1"
+        }
+    ]
+}

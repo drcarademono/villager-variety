@@ -3,7 +3,7 @@
     "ModVersion": "0.8",
     "ModAuthor": "Hazelnut & carademono",
     "ContactInfo": "forums.dfworkshop.net",
-    "DFUnity_Version": "0.11.6",
+    "DFUnity_Version": "0.11.5",
     "GUID": "417cf548-ece1-4fbb-a47d-2eacf0570709",
     "Files": [
         "Assets/Game/Mods/VillagerVariety/Textures/382/382.X.0/382.330.0_5-1.png",
@@ -5689,6 +5689,7 @@
         "Assets/Game/Mods/VillagerVariety/Textures/Portraits/TFAC00I0.RCI_323-0.PNG",
         "Assets/Game/Mods/VillagerVariety/Textures/Portraits/TFAC00I0.RCI_326-0.PNG",
         "Assets/Game/Mods/VillagerVariety/Textures/Portraits/TFAC00I0.RCI_351-0.PNG",
-        "Assets/Game/Mods/VillagerVariety/Textures/Portraits/TFAC00I0.RCI_355-0.PNG"
+        "Assets/Game/Mods/VillagerVariety/Textures/Portraits/TFAC00I0.RCI_355-0.PNG",
+        "Assets/Game/Mods/VillagerVariety/modsettings.json"
     ]
 }
