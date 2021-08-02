@@ -45,10 +45,6 @@ namespace VillagerVariety
         private static Dictionary<string, Texture2D[][]> textureCache = new Dictionary<string, Texture2D[][]>();
         private static Dictionary<string, Texture2D[][]> emmisionCache = new Dictionary<string, Texture2D[][]>();
 
-        private static bool vioSpritesEnabled = false;
-        private static int vioReplacement = 0;
-        private static List<int> vioArchives = new List<int>() { 383, 385, 386, 387, 388, 389, 392, 395, 397, 398, 451, 454, 455, 456 };
-
         #region Fields
 
         const int numberOrientations = 8;
@@ -153,15 +149,6 @@ namespace VillagerVariety
             {
                 mod = ModManager.Instance.GetModFromGUID("417cf548-ece1-4fbb-a47d-2eacf0570709");
                 mod.MessageReceiver = MessageReceiver;
-
-                Mod vioSpritesMod = ModManager.Instance.GetMod("VIO - Sprites");
-                vioSpritesEnabled = vioSpritesMod != null & vioSpritesMod.Enabled;
-                if (vioSpritesEnabled)
-                {
-                    ModSettings settings = mod.GetSettings();
-                    vioReplacement = settings.GetInt("VIOCompatibility", "vioAmount");
-                    Debug.LogFormat("VIO sprites enabled, replacement amount: {0}%", vioReplacement);
-                }
             }
 
             if (Application.isPlaying)
@@ -300,9 +287,6 @@ namespace VillagerVariety
         {
             importedTexturesVV = false;
             if (isUsingGuardTexture)
-                return null;
-
-            if (vioSpritesEnabled && vioArchives.Contains(archive) && Random.Range(0, 101) < vioReplacement)   // % of these archives will be VIO sprites
                 return null;
 
             // Make material
