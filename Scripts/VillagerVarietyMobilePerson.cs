@@ -13,7 +13,6 @@ using DaggerfallWorkshop;
 using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Entity;
 using DaggerfallWorkshop.Game.Utility.ModSupport;
-using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 using DaggerfallWorkshop.Utility;
 using DaggerfallWorkshop.Utility.AssetInjection;
 
@@ -31,7 +30,7 @@ namespace VillagerVariety
     [RequireComponent(typeof(MeshRenderer))]
     public class VillagerVarietyMobilePerson : MobilePersonAsset
     {
-        public const int NUM_VARIANTS = 2;  // Number of variants to generate, a variant falls back to 0 if no images found.
+        public const int NUM_VARIANTS = 1;  // Number of variants to generate, a variant falls back to 0 if no images found.
 
         private const string EMISSION = "_Emission";
         private const string EMISSIONMAP = "_EmissionMap";
@@ -46,7 +45,6 @@ namespace VillagerVariety
         private static Dictionary<string, Texture2D[][]> emmisionCache = new Dictionary<string, Texture2D[][]>();
 
         private static bool vioSpritesEnabled = false;
-        private static int vioReplacement = 0;
         private static List<int> vioArchives = new List<int>() { 383, 385, 386, 387, 388, 389, 392, 395, 397, 398, 451, 454, 455, 456 };
 
         #region Fields
@@ -155,13 +153,8 @@ namespace VillagerVariety
                 mod.MessageReceiver = MessageReceiver;
 
                 Mod vioSpritesMod = ModManager.Instance.GetMod("VIO - Sprites");
-                vioSpritesEnabled = vioSpritesMod != null & vioSpritesMod.Enabled;
-                if (vioSpritesEnabled)
-                {
-                    ModSettings settings = mod.GetSettings();
-                    vioReplacement = settings.GetInt("VIOCompatibility", "vioAmount");
-                    Debug.LogFormat("VIO sprites enabled, replacement amount: {0}%", vioReplacement);
-                }
+                vioSpritesEnabled = vioSpritesMod.Enabled;
+                Debug.Log("vio sprites: " + vioSpritesEnabled);
             }
 
             if (Application.isPlaying)
@@ -302,7 +295,7 @@ namespace VillagerVariety
             if (isUsingGuardTexture)
                 return null;
 
-            if (vioSpritesEnabled && vioArchives.Contains(archive) && Random.Range(0, 101) < vioReplacement)   // % of these archives will be VIO sprites
+            if (vioArchives.Contains(archive) && Random.Range(0, 10) < 2)   // 20% of these archives will be VIO sprites
                 return null;
 
             // Make material
