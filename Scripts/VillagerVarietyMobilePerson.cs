@@ -30,7 +30,7 @@ namespace VillagerVariety
     [RequireComponent(typeof(MeshRenderer))]
     public class VillagerVarietyMobilePerson : MobilePersonAsset
     {
-        public const int NUM_VARIANTS = 1;  // Number of variants to generate, a variant falls back to 0 if no images found.
+        public const int NUM_VARIANTS = 2;  // Number of variants to generate, a variant falls back to 0 if no images found.
 
         private const string EMISSION = "_Emission";
         private const string EMISSIONMAP = "_EmissionMap";
@@ -43,9 +43,6 @@ namespace VillagerVariety
 
         private static Dictionary<string, Texture2D[][]> textureCache = new Dictionary<string, Texture2D[][]>();
         private static Dictionary<string, Texture2D[][]> emmisionCache = new Dictionary<string, Texture2D[][]>();
-
-        private static bool vioSpritesEnabled = false;
-        private static List<int> vioArchives = new List<int>() { 383, 385, 386, 387, 388, 389, 392, 395, 397, 398, 451, 454, 455, 456 };
 
         #region Fields
 
@@ -69,7 +66,6 @@ namespace VillagerVariety
         MobileAnimation[] idleAnims;
         MobileBillboardImportedTextures importedTextures;
         int currentFrame = 0;
-        bool importedTexturesVV = false;
 
         float animSpeed;
         float animTimer = 0;
@@ -151,10 +147,6 @@ namespace VillagerVariety
             {
                 mod = ModManager.Instance.GetModFromGUID("417cf548-ece1-4fbb-a47d-2eacf0570709");
                 mod.MessageReceiver = MessageReceiver;
-
-                Mod vioSpritesMod = ModManager.Instance.GetMod("VIO - Sprites");
-                vioSpritesEnabled = vioSpritesMod.Enabled;
-                Debug.Log("vio sprites: " + vioSpritesEnabled);
             }
 
             if (Application.isPlaying)
@@ -247,9 +239,9 @@ namespace VillagerVariety
                 //variant = 1;
                 //season = "";
             }
-#if UNITY_EDITOR
+
             Debug.LogFormat("Setting up villager variant: {0:000}.{1}.{2}{3}", archive, personFaceRecordId, variant, season);
-#endif
+
             CacheRecordSizesAndFrames(archive);
 
             AssignMeshAndMaterial(archive, personFaceRecordId, variant, season);
@@ -276,9 +268,9 @@ namespace VillagerVariety
             return recordSizes[0];
         }
 
-#endregion
+        #endregion
 
-#region Private Methods
+        #region Private Methods
 
         private static string GetImageName(int archive, int record, int frame, int face, int variant, string season)
         {
@@ -291,11 +283,7 @@ namespace VillagerVariety
 
         private Material LoadVillagerVariant(int archive, int faceRecord, int variant, string season, MeshFilter meshFilter, ref MobileBillboardImportedTextures importedTextures)
         {
-            importedTexturesVV = false;
             if (isUsingGuardTexture)
-                return null;
-
-            if (vioArchives.Contains(archive) && Random.Range(0, 10) < 2)   // 20% of these archives will be VIO sprites
                 return null;
 
             // Make material
@@ -318,7 +306,7 @@ namespace VillagerVariety
             {
                 // Load texture file to get record and frame count
                 string fileName = TextureFile.IndexToFileName(archive);
-                TextureFile textureFile = new TextureFile(Path.Combine(DaggerfallUnity.Instance.Arena2Path, fileName), FileUsage.UseMemory, true);
+                var textureFile = new TextureFile(Path.Combine(DaggerfallUnity.Instance.Arena2Path, fileName), FileUsage.UseMemory, true);
 
                 // Check this season & variant is availible, use no season, then variant 0 if not
                 if (!mod.HasAsset(firstFrameName))
@@ -388,7 +376,6 @@ namespace VillagerVariety
             // Update UV map and indicate imported textures should be used
             SetUv(meshFilter);
             importedTextures.HasImportedTextures = true;
-            importedTexturesVV = true;
 
             return material;
         }
@@ -463,8 +450,8 @@ namespace VillagerVariety
                 finalSize.x = (size.Width + xChange);
                 finalSize.y = (size.Height + yChange);
 
-                // Set optional scale - done later only for standard texture replacements
-                //TextureReplacement.SetBillboardScale(textureArchive, i, ref finalSize);
+                // Set optional scale
+                TextureReplacement.SetBillboardScale(textureArchive, i, ref finalSize);
 
                 // Store final size and frame count
                 recordSizes[i] = finalSize * MeshReader.GlobalScale;
@@ -528,18 +515,6 @@ namespace VillagerVariety
                 0,
                 false,
                 true);
-
-            if (importedTextures.HasImportedTextures && importedTexturesVV == false)
-            {
-                TextureFile textureFile = new TextureFile(Path.Combine(DaggerfallUnity.Instance.Arena2Path, TextureFile.IndexToFileName(textureArchive)), FileUsage.UseMemory, true);
-                for (int i = 0; i < textureFile.RecordCount; i++)
-                {
-                    // Set optional scale for archive
-                    Vector2 finalSize = recordSizes[i] / MeshReader.GlobalScale;
-                    TextureReplacement.SetBillboardScale(textureArchive, i, ref finalSize);
-                    recordSizes[i] = finalSize * MeshReader.GlobalScale;
-                }
-            }
 
             // Set new person material
             GetComponent<MeshRenderer>().sharedMaterial = material;
@@ -678,9 +653,9 @@ namespace VillagerVariety
             return anims;
         }
 
-#endregion
+        #endregion
 
-#region Mod messages
+        #region Mod messages
 
         public const string GET_NUM_VARIANTS = "getNumVariants";
         public const string GET_SEASON_STR = "getSeasonStr";
@@ -717,6 +692,6 @@ namespace VillagerVariety
             }
         }
 
-#endregion
+        #endregion
     }
 }
