@@ -1,9 +1,9 @@
 {
     "ModTitle": "Vanilla Enhanced - Villagers",
-    "ModVersion": "1.6",
-    "ModAuthor": "carademono & Hazelnut",
+    "ModVersion": "1.7",
+    "ModAuthor": "carademono, Hazelnut & John Doom",
     "ContactInfo": "forums.dfworkshop.net",
-    "DFUnity_Version": "0.11.6",
+    "DFUnity_Version": "0.13.4",
     "ModDescription": "Varied faces and outfits for the villagers of the Iliac Bay",
     "GUID": "417cf548-ece1-4fbb-a47d-2eacf0570709",
     "Files": [
@@ -7043,6 +7043,7 @@
         "Assets/Game/Mods/villager-variety/Textures/Portraits/TFAC00I0.RCI_323-0.PNG",
         "Assets/Game/Mods/villager-variety/Textures/Portraits/TFAC00I0.RCI_326-0.PNG",
         "Assets/Game/Mods/villager-variety/Textures/Portraits/TFAC00I0.RCI_351-0.PNG",
-        "Assets/Game/Mods/villager-variety/Textures/Portraits/TFAC00I0.RCI_355-0.PNG"
+        "Assets/Game/Mods/villager-variety/Textures/Portraits/TFAC00I0.RCI_355-0.PNG",
+        "Assets/Game/Mods/villager-variety/Scripts/VillagerVariety.cs"
     ]
 }
