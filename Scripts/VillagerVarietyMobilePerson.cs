@@ -18,8 +18,9 @@ using DaggerfallWorkshop.Utility.AssetInjection;
 
 // NPC Sprite images should be named like this:
 // archive.face.variant_record-frame.png
-// e.g. 123.145.1w_3-1.png
-// variant is a number followed (optionally) by a season letter
+// e.g. 123.145.N1w_3-1.png
+// variant is a number preceded (optionally) by a climate variant, followed (optionally) by a season letter
+// climate variants are S (Subtropical/Swamp)
 // season is p (spring), m (summer), f (fall), w (winter)  [use one as the default, can be different per sprite]
 
 namespace VillagerVariety
@@ -29,18 +30,11 @@ namespace VillagerVariety
     [RequireComponent(typeof(MeshFilter))]
     [RequireComponent(typeof(MeshRenderer))]
     public class VillagerVarietyMobilePerson : MobilePersonAsset
-    {
-        public const int NUM_VARIANTS = 2;  // Number of variants to generate, a variant falls back to 0 if no images found.
-
+    {        
         private const string EMISSION = "_Emission";
         private const string EMISSIONMAP = "_EmissionMap";
         private const string EMISSIONCOLOR = "_EmissionColor";
-
-
-        private readonly static string[] seasonStrs = { "f", "p", "m", "w" };
-
-        private static Mod mod;
-
+                
         private static Dictionary<string, Texture2D[][]> textureCache = new Dictionary<string, Texture2D[][]>();
         private static Dictionary<string, Texture2D[][]> emmisionCache = new Dictionary<string, Texture2D[][]>();
 
@@ -71,21 +65,6 @@ namespace VillagerVariety
         float animTimer = 0;
 
         bool isUsingGuardTexture = false;
-
-        #endregion
-
-        #region Textures
-
-        int[] maleRedguardTextures = new int[] { 381, 382, 383, 384 };
-        int[] femaleRedguardTextures = new int[] { 395, 396, 397, 398 };
-
-        int[] maleNordTextures = new int[] { 387, 388, 389, 390 };
-        int[] femaleNordTextures = new int[] { 392, 393, 451, 452 };
-
-        int[] maleBretonTextures = new int[] { 385, 386, 391, 394 };
-        int[] femaleBretonTextures = new int[] { 453, 454, 455, 456 };
-
-        int[] guardTextures = { 399 };
 
         #endregion
 
@@ -143,12 +122,6 @@ namespace VillagerVariety
 
         private void Start()
         {
-            if (mod == null)
-            {
-                mod = ModManager.Instance.GetModFromGUID("417cf548-ece1-4fbb-a47d-2eacf0570709");
-                mod.MessageReceiver = MessageReceiver;
-            }
-
             if (Application.isPlaying)
             {
                 // Get component references
@@ -197,9 +170,9 @@ namespace VillagerVariety
         public override void SetPerson(Races race, Genders gender, int personVariant, bool isGuard, int personFaceVariant, int personFaceRecordId)
         {
             // Must specify a race and mod must be defined
-            if (race == Races.None || mod == null)
+            if (race == Races.None)
                 return;
-
+                        
             // Get texture range for this race and gender
             int[] textures = null;
 
@@ -207,29 +180,29 @@ namespace VillagerVariety
 
             if (isGuard)
             {
-                textures = guardTextures;
+                textures = VillagerVarietyMod.GUARD_TEXTURES;
             }
             else
             {
                 switch (race)
                 {
                     case Races.Redguard:
-                        textures = (gender == Genders.Male) ? maleRedguardTextures : femaleRedguardTextures;
+                        textures = (gender == Genders.Male) ? VillagerVarietyMod.MALE_REDGUARD_TEXTURES : VillagerVarietyMod.FEMALE_REDGUARD_TEXTURES;
                         break;
                     case Races.Nord:
-                        textures = (gender == Genders.Male) ? maleNordTextures : femaleNordTextures;
+                        textures = (gender == Genders.Male) ? VillagerVarietyMod.MALE_NORD_TEXTURES : VillagerVarietyMod.FEMALE_NORD_TEXTURES;
                         break;
                     case Races.Breton:
                     default:
-                        textures = (gender == Genders.Male) ? maleBretonTextures : femaleBretonTextures;
+                        textures = (gender == Genders.Male) ? VillagerVarietyMod.MALE_BRETON_TEXTURES : VillagerVarietyMod.FEMALE_BRETON_TEXTURES;
                         break;
                 }
             }
 
             // Setup person rendering, selecting random variant and setting current season
             int archive = textures[personVariant];
-            int variant = Random.Range(0, NUM_VARIANTS);
-            string season = seasonStrs[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue];
+            int variant = Random.Range(0, VillagerVarietyMod.NUM_VARIANTS);
+            string season = VillagerVarietyMod.SEASON_STRS[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue];
 
 // Carademono: Testing lines to make all mobile NPCs a specific sprite - uncomment as required while testing (note: talk face wont match)
             if (!isGuard)
@@ -271,26 +244,21 @@ namespace VillagerVariety
         #endregion
 
         #region Private Methods
-
-        private static string GetImageName(int archive, int record, int frame, int face, int variant, string season)
-        {
-            return string.Format("{0:000}.{3}.{4}{5}_{1}-{2}", archive, record, frame, face, variant, season);
-        }
-        private static string GetImageName(int archive, int record, int frame, int variant, string season)
-        {
-            return string.Format("{0:000}.{3}.{4}{5}_{1}-{2}", archive, record, frame, "X", variant, season);
-        }
-
+                
         private Material LoadVillagerVariant(int archive, int faceRecord, int variant, string season, MeshFilter meshFilter, ref MobileBillboardImportedTextures importedTextures)
         {
             if (isUsingGuardTexture)
                 return null;
 
+            Mod mod = VillagerVarietyMod.Mod;
+
+            string climateVariant = VillagerVarietyMod.GetClimateVariant(archive);
+
             // Make material
             Material material = MaterialReader.CreateStandardMaterial(MaterialReader.CustomBlendMode.Cutout);
 
             // Check the cache for previously loaded variant textures
-            string firstFrameName = GetImageName(archive, 0, 0, faceRecord, variant, season);
+            string firstFrameName = VillagerVarietyMod.GetImageName(archive, 0, 0, faceRecord, variant, climateVariant, season);
             if (textureCache.ContainsKey(firstFrameName))
             {
                 importedTextures.Albedo = textureCache[firstFrameName];
@@ -308,26 +276,33 @@ namespace VillagerVariety
                 string fileName = TextureFile.IndexToFileName(archive);
                 var textureFile = new TextureFile(Path.Combine(DaggerfallUnity.Instance.Arena2Path, fileName), FileUsage.UseMemory, true);
 
-                // Check this season & variant is availible, use no season, then variant 0 if not
+                // Check if this climate, season, and variant is available. If not, remove season, then climate, then set variant to 0
+                if (!mod.HasAsset(firstFrameName) && !string.IsNullOrEmpty(season))
+                {
+                    season = string.Empty;
+                    firstFrameName = VillagerVarietyMod.GetImageName(archive, 0, 0, faceRecord, variant, climateVariant, season);
+                }
+                
+                if (!mod.HasAsset(firstFrameName) && variant != 0)
+                {
+                    variant = 0;
+                    firstFrameName = VillagerVarietyMod.GetImageName(archive, 0, 0, faceRecord, variant, climateVariant, season);
+                }
+
+                if (!mod.HasAsset(firstFrameName) && !string.IsNullOrEmpty(climateVariant))
+                {
+                    climateVariant = string.Empty;
+                    firstFrameName = VillagerVarietyMod.GetImageName(archive, 0, 0, faceRecord, variant, climateVariant, season);
+                }
+
                 if (!mod.HasAsset(firstFrameName))
                 {
-                    if (!string.IsNullOrEmpty(season))
-                    {
-                        season = string.Empty;
-                        if (!mod.HasAsset(GetImageName(archive, 0, 0, faceRecord, variant, season)))
-                            variant = 0;
-                    }
-                    else
-                        variant = 0;
-                }
-                if (!mod.HasAsset(GetImageName(archive, 0, 0, faceRecord, variant, season)))
-                {
-                    Debug.LogFormat("No villager variant found after fallback: {0:000}.{1}.{2}{3}", archive, faceRecord, variant, season);
+                    Debug.LogFormat("No villager variant found after fallback: {0:000}.{1}.{3}{2}{4}", archive, faceRecord, variant, climateVariant, season);
                     return null;
                 }
 
                 // Check whether there are emission textures (must exist for first frame)
-                if (importedTextures.IsEmissive = mod.HasAsset(GetImageName(archive, 0, 0, faceRecord, variant, season) + EMISSION))
+                if (importedTextures.IsEmissive = mod.HasAsset(firstFrameName + EMISSION))
                 {
                     material.EnableKeyword(EMISSION);
                     material.SetColor(EMISSIONCOLOR, Color.white);
@@ -345,8 +320,8 @@ namespace VillagerVariety
 
                     for (int frame = 0; frame < frames; frame++)
                     {
-                        string faceFileName = GetImageName(archive, record, frame, faceRecord, variant, season);
-                        string nofaceFileName = GetImageName(archive, record, frame, variant, season);
+                        string faceFileName = VillagerVarietyMod.GetImageName(archive, record, frame, faceRecord, variant, climateVariant, season);
+                        string nofaceFileName = VillagerVarietyMod.GetImageName(archive, record, frame, variant, climateVariant, season);
                         if (mod.HasAsset(faceFileName))
                             frameTextures[frame] = mod.GetAsset<Texture2D>(faceFileName);
                         else if (mod.HasAsset(nofaceFileName))
@@ -356,7 +331,7 @@ namespace VillagerVariety
 
                         if (frameEmissionMaps != null)
                         {
-                            Texture2D emissTex = mod.GetAsset<Texture2D>(GetImageName(archive, record, frame, faceRecord, variant, season) + EMISSION);
+                            Texture2D emissTex = mod.GetAsset<Texture2D>(VillagerVarietyMod.GetImageName(archive, record, frame, faceRecord, variant, climateVariant, season) + EMISSION);
                             frameEmissionMaps[frame] = emissTex ?? frameTextures[frame];
                         }
                     }
@@ -651,45 +626,6 @@ namespace VillagerVariety
                 anims[i].NumFrames = recordFrames[anims[i].Record];
 
             return anims;
-        }
-
-        #endregion
-
-        #region Mod messages
-
-        public const string GET_NUM_VARIANTS = "getNumVariants";
-        public const string GET_SEASON_STR = "getSeasonStr";
-        public const string GET_IMAGE_NAME = "getImageName";
-
-        private static void MessageReceiver(string message, object data, DFModMessageCallback callBack)
-        {
-            try {
-
-                switch (message)
-                {
-                    case GET_NUM_VARIANTS:
-                        callBack?.Invoke(GET_NUM_VARIANTS, NUM_VARIANTS);
-                        break;
-
-                    case GET_SEASON_STR:
-                        callBack?.Invoke(GET_SEASON_STR, seasonStrs[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue]);
-                        break;
-                        
-                    case GET_IMAGE_NAME:
-                        object[] paramArr = (object[])data;
-                        callBack?.Invoke(GET_IMAGE_NAME, GetImageName((int)paramArr[0], (int)paramArr[1], (int)paramArr[2], (int)paramArr[3], (int)paramArr[4], (string)paramArr[5]));
-                        break;
-
-                    default:
-                        Debug.LogErrorFormat("{0}: unknown message received ({1}).", mod.Title, message);
-                        break;
-                }
-            }
-            catch
-            {
-                Debug.LogErrorFormat("{0}: error handling message ({1}).", mod.Title, message);
-                callBack?.Invoke("error", "Data passed is invalid for " + message);
-            }
         }
 
         #endregion
