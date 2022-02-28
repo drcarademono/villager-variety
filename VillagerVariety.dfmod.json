@@ -7043,6 +7043,8 @@
         "Assets/Game/Mods/villager-variety/Textures/Portraits/TFAC00I0.RCI_323-0.PNG",
         "Assets/Game/Mods/villager-variety/Textures/Portraits/TFAC00I0.RCI_326-0.PNG",
         "Assets/Game/Mods/villager-variety/Textures/Portraits/TFAC00I0.RCI_351-0.PNG",
-        "Assets/Game/Mods/villager-variety/Textures/Portraits/TFAC00I0.RCI_355-0.PNG"
+        "Assets/Game/Mods/villager-variety/Textures/Portraits/TFAC00I0.RCI_355-0.PNG",
+        "Assets/Game/Mods/villager-variety/Scripts/VillagerVarietyMod.cs",
+        "Assets/Game/Mods/villager-variety/Scripts/VillagerVarietyPopulationManagerProxy.cs"
     ]
 }
