@@ -43,23 +43,20 @@ namespace VillagerVariety
         public static readonly int[] GUARD_TEXTURES = { 399 };
 
 
-        public static string GetClimateVariant(int archive)
+        public static string GetClimateVariant()
         {
             var PlayerGPS = GameManager.Instance.PlayerGPS;
-            if (MALE_REDGUARD_TEXTURES.Contains(archive) || FEMALE_REDGUARD_TEXTURES.Contains(archive))
+            // "Subtropical" Redguards, in swamp and subtropical climates
+            if (PlayerGPS.CurrentClimateIndex == (int)MapsFile.Climates.Swamp
+            || PlayerGPS.CurrentClimateIndex == (int)MapsFile.Climates.Subtropical)
             {
-                // "Subtropical" Redguards, in swamp and subtropical climates
-                if (PlayerGPS.CurrentClimateIndex == (int)MapsFile.Climates.Swamp
-                || PlayerGPS.CurrentClimateIndex == (int)MapsFile.Climates.Subtropical)
-                {
-                    return "S"; 
-                }
-                else if (PlayerGPS.CurrentRegionIndex == (int)DaggerfallRegions.DragontailMountains
-                    || PlayerGPS.CurrentRegionIndex == (int)DaggerfallRegions.Ephesus)
-                {
-                    // Reusing the subtropical redguard skins
-                    return "S";
-                }
+                return "S"; 
+            }
+            else if (PlayerGPS.CurrentRegionIndex == (int)DaggerfallRegions.DragontailMountains
+                || PlayerGPS.CurrentRegionIndex == (int)DaggerfallRegions.Ephesus)
+            {
+                // Reusing the subtropical redguard skins
+                return "S";
             }
 
             return "";
@@ -100,7 +97,7 @@ namespace VillagerVariety
                         break;
 
                     case GET_ARCHIVE_CURRENT_CLIMATE:
-                        callBack?.Invoke(GET_ARCHIVE_CURRENT_CLIMATE, GetClimateVariant((int)data));
+                        callBack?.Invoke(GET_ARCHIVE_CURRENT_CLIMATE, GetClimateVariant());
                         break;
 
                     case GET_IMAGE_NAME:

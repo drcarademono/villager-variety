@@ -65,6 +65,7 @@ namespace VillagerVariety
         float animTimer = 0;
 
         bool isUsingGuardTexture = false;
+        bool skippedFirstTexture = false;
 
         #endregion
 
@@ -169,10 +170,10 @@ namespace VillagerVariety
         /// </summary>
         public override void SetPerson(Races race, Genders gender, int personVariant, bool isGuard, int personFaceVariant, int personFaceRecordId)
         {
-            // Must specify a race and mod must be defined
+            // Must specify a race
             if (race == Races.None)
                 return;
-                        
+                                    
             // Get texture range for this race and gender
             int[] textures = null;
 
@@ -201,9 +202,7 @@ namespace VillagerVariety
 
             // Setup person rendering, selecting random variant and setting current season
             int archive = textures[personVariant];
-            int variant = Random.Range(0, VillagerVarietyMod.NUM_VARIANTS);
-            string season = VillagerVarietyMod.SEASON_STRS[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue];
-
+            
 // Carademono: Testing lines to make all mobile NPCs a specific sprite - uncomment as required while testing (note: talk face wont match)
             if (!isGuard)
             {
@@ -213,10 +212,20 @@ namespace VillagerVariety
                 //season = "";
             }
 
-            Debug.LogFormat("Setting up villager variant: {0:000}.{1}.{2}{3}", archive, personFaceRecordId, variant, season);
-
             CacheRecordSizesAndFrames(archive);
 
+            // SetPerson is called twice for our climate variants (see VillagerVarietyPopulationManagerProxy)
+            // Skip the first call since it's gonna be discarded anyway
+            if (!string.IsNullOrEmpty(VillagerVarietyMod.GetClimateVariant()) && !skippedFirstTexture)
+            {
+                skippedFirstTexture = true;
+                return;
+            }
+
+            int variant = Random.Range(0, VillagerVarietyMod.NUM_VARIANTS);
+            string season = VillagerVarietyMod.SEASON_STRS[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue];
+
+            Debug.LogFormat("Setting up villager variant: {0:000}.{1}.{2}{3}", archive, personFaceRecordId, variant, season);
             AssignMeshAndMaterial(archive, personFaceRecordId, variant, season);
 
             // Setup animation state
@@ -252,7 +261,7 @@ namespace VillagerVariety
 
             Mod mod = VillagerVarietyMod.Mod;
 
-            string climateVariant = VillagerVarietyMod.GetClimateVariant(archive);
+            string climateVariant = VillagerVarietyMod.GetClimateVariant();
 
             // Make material
             Material material = MaterialReader.CreateStandardMaterial(MaterialReader.CustomBlendMode.Cutout);
@@ -440,39 +449,42 @@ namespace VillagerVariety
             if (meshFilter == null)
                 meshFilter = GetComponent<MeshFilter>();
 
-            // Vertices for a 1x1 unit quad
-            // This is scaled to correct size depending on facing and orientation
-            float hx = 0.5f, hy = 0.5f;
-            Vector3[] vertices = new Vector3[4];
-            vertices[0] = new Vector3(hx, hy, 0);
-            vertices[1] = new Vector3(-hx, hy, 0);
-            vertices[2] = new Vector3(hx, -hy, 0);
-            vertices[3] = new Vector3(-hx, -hy, 0);
-
-            // Indices
-            int[] indices = new int[6]
+            if (meshFilter.sharedMesh == null)
             {
+                // Vertices for a 1x1 unit quad
+                // This is scaled to correct size depending on facing and orientation
+                float hx = 0.5f, hy = 0.5f;
+                Vector3[] vertices = new Vector3[4];
+                vertices[0] = new Vector3(hx, hy, 0);
+                vertices[1] = new Vector3(-hx, hy, 0);
+                vertices[2] = new Vector3(hx, -hy, 0);
+                vertices[3] = new Vector3(-hx, -hy, 0);
+
+                // Indices
+                int[] indices = new int[6]
+                {
                 0, 1, 2,
                 3, 2, 1,
-            };
+                };
 
-            // Normals
-            Vector3 normal = Vector3.Normalize(Vector3.up + Vector3.forward);
-            Vector3[] normals = new Vector3[4];
-            normals[0] = normal;
-            normals[1] = normal;
-            normals[2] = normal;
-            normals[3] = normal;
+                // Normals
+                Vector3 normal = Vector3.Normalize(Vector3.up + Vector3.forward);
+                Vector3[] normals = new Vector3[4];
+                normals[0] = normal;
+                normals[1] = normal;
+                normals[2] = normal;
+                normals[3] = normal;
 
-            // Create mesh
-            Mesh mesh = new Mesh();
-            mesh.name = string.Format("MobilePersonMesh");
-            mesh.vertices = vertices;
-            mesh.triangles = indices;
-            mesh.normals = normals;
+                // Create mesh
+                Mesh mesh = new Mesh();
+                mesh.name = string.Format("MobilePersonMesh");
+                mesh.vertices = vertices;
+                mesh.triangles = indices;
+                mesh.normals = normals;
 
-            // Assign mesh
-            meshFilter.sharedMesh = mesh;
+                // Assign mesh
+                meshFilter.sharedMesh = mesh;
+            }            
 
             // Create material
             Material material =
