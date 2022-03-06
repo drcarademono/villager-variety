@@ -3,6 +3,7 @@ using DaggerfallWorkshop;
 using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Entity;
 using DaggerfallWorkshop.Game.Utility;
+using UnityEngine;
 
 namespace VillagerVariety
 {
@@ -20,7 +21,7 @@ namespace VillagerVariety
             // Daggerfall makes Swamp and Subtropical climates into Bretons using Redguard names
             // For VV, we replace these with Redguard textures, which the MobilePerson script will replace with a Subtropical variant if available
             if (PlayerGPS.CurrentClimateIndex == (int)MapsFile.Climates.Swamp
-                || PlayerGPS.CurrentRegionIndex == (int)MapsFile.Climates.Subtropical)
+                || PlayerGPS.CurrentClimateIndex == (int)MapsFile.Climates.Subtropical)
             {
                 if (poolItem.npc.Race != Races.Redguard)
                 {
