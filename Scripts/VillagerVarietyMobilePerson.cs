@@ -259,8 +259,6 @@ namespace VillagerVariety
             if (isUsingGuardTexture)
                 return null;
 
-            Mod mod = VillagerVarietyMod.Mod;
-
             string climateVariant = VillagerVarietyMod.GetClimateVariant();
 
             // Make material
@@ -284,34 +282,35 @@ namespace VillagerVariety
                 // Load texture file to get record and frame count
                 string fileName = TextureFile.IndexToFileName(archive);
                 var textureFile = new TextureFile(Path.Combine(DaggerfallUnity.Instance.Arena2Path, fileName), FileUsage.UseMemory, true);
+                Texture2D _;
 
                 // Check if this climate, season, and variant is available. If not, remove season, then climate, then set variant to 0
-                if (!mod.HasAsset(firstFrameName) && !string.IsNullOrEmpty(season))
+                if (!ModManager.Instance.TryGetAsset(firstFrameName, clone: false, out _) && !string.IsNullOrEmpty(season))
                 {
                     season = string.Empty;
                     firstFrameName = VillagerVarietyMod.GetImageName(archive, 0, 0, faceRecord, variant, climateVariant, season);
                 }
                 
-                if (!mod.HasAsset(firstFrameName) && variant != 0)
+                if (!ModManager.Instance.TryGetAsset(firstFrameName, clone: false, out _) && variant != 0)
                 {
                     variant = 0;
                     firstFrameName = VillagerVarietyMod.GetImageName(archive, 0, 0, faceRecord, variant, climateVariant, season);
                 }
 
-                if (!mod.HasAsset(firstFrameName) && !string.IsNullOrEmpty(climateVariant))
+                if (!ModManager.Instance.TryGetAsset(firstFrameName, clone: false, out _) && !string.IsNullOrEmpty(climateVariant))
                 {
                     climateVariant = string.Empty;
                     firstFrameName = VillagerVarietyMod.GetImageName(archive, 0, 0, faceRecord, variant, climateVariant, season);
                 }
 
-                if (!mod.HasAsset(firstFrameName))
+                if (!ModManager.Instance.TryGetAsset(firstFrameName, clone: false, out _))
                 {
                     Debug.LogFormat("No villager variant found after fallback: {0:000}.{1}.{3}{2}{4}", archive, faceRecord, variant, climateVariant, season);
                     return null;
                 }
 
                 // Check whether there are emission textures (must exist for first frame)
-                if (importedTextures.IsEmissive = mod.HasAsset(firstFrameName + EMISSION))
+                if (importedTextures.IsEmissive = ModManager.Instance.TryGetAsset(firstFrameName + EMISSION, clone: false, out _))
                 {
                     material.EnableKeyword(EMISSION);
                     material.SetColor(EMISSIONCOLOR, Color.white);
@@ -331,16 +330,19 @@ namespace VillagerVariety
                     {
                         string faceFileName = VillagerVarietyMod.GetImageName(archive, record, frame, faceRecord, variant, climateVariant, season);
                         string nofaceFileName = VillagerVarietyMod.GetImageName(archive, record, frame, variant, climateVariant, season);
-                        if (mod.HasAsset(faceFileName))
-                            frameTextures[frame] = mod.GetAsset<Texture2D>(faceFileName);
-                        else if (mod.HasAsset(nofaceFileName))
-                            frameTextures[frame] = mod.GetAsset<Texture2D>(nofaceFileName);                 // Fallback to no face replacement
-                        else
-                            frameTextures[frame] = ImageReader.GetTexture(fileName, record, frame, true);   // Use vanilla texture/override if no custom frame
+
+                        bool found = ModManager.Instance.TryGetAsset(faceFileName, clone: false, out frameTextures[frame]);
+
+                        if(!found)
+                            found = ModManager.Instance.TryGetAsset(nofaceFileName, clone: false, out frameTextures[frame]); // Fallback to no face replacement
+
+                        if (!found)
+                            frameTextures[frame] = ImageReader.GetTexture(fileName, record, frame, hasAlpha: true);   // Use vanilla texture/override if no custom frame
 
                         if (frameEmissionMaps != null)
                         {
-                            Texture2D emissTex = mod.GetAsset<Texture2D>(VillagerVarietyMod.GetImageName(archive, record, frame, faceRecord, variant, climateVariant, season) + EMISSION);
+                            ModManager.Instance.TryGetAsset(VillagerVarietyMod.GetImageName(archive, record, frame, faceRecord, variant, climateVariant, season) + EMISSION
+                                , clone: false, out Texture2D emissTex);
                             frameEmissionMaps[frame] = emissTex ?? frameTextures[frame];
                         }
                     }
