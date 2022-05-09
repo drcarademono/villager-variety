@@ -42,6 +42,53 @@ namespace VillagerVariety
 
         public static readonly int[] GUARD_TEXTURES = { 399 };
 
+        public static bool IsInHammerfell()
+        {
+            var GPS = GameManager.Instance.PlayerGPS;
+            switch ((MapsFile.Climates)GPS.CurrentClimateIndex)
+            {
+                case MapsFile.Climates.Desert:
+                case MapsFile.Climates.Desert2:
+                case MapsFile.Climates.Swamp:
+                case MapsFile.Climates.Rainforest:
+                case MapsFile.Climates.Subtropical:
+                    return true;
+            }
+
+            switch (GPS.CurrentRegionIndex)
+            {
+                case 1: // Dragontail Mountains
+                case 53: // Ephesus
+                    return true;
+            }
+
+            return false;
+        }
+
+        public static string GetRegionalVariant(int archive)
+        {
+            if(GUARD_TEXTURES.Contains(archive))
+            {
+                switch(GameManager.Instance.PlayerGPS.CurrentRegionIndex)
+                {
+                    case 20: // Sentinel
+                        return "20";
+                }
+            }
+
+            return null;
+        }
+
+        public static string GetNationalVariant(int archive)
+        {
+            if (GUARD_TEXTURES.Contains(archive))
+            {
+                if (IsInHammerfell())
+                    return "HF";
+            }
+
+            return null;
+        }
 
         public static string GetClimateVariant()
         {
@@ -70,6 +117,17 @@ namespace VillagerVariety
         {
             return string.Format("{0:000}.{3}.{5}{4}{6}_{1}-{2}", archive, record, frame, "X", variant, climate, season);
         }
+        public static string GetGuardImageName(int archive, int record, int frame, string variant)
+        {
+            if (string.IsNullOrEmpty(variant))
+            {
+                return string.Format("{0:000}.{3}_{1}-{2}", archive, record, frame, variant);
+            }
+            else
+            {
+                return string.Format("{0:000}_{1}-{2}", archive, record, frame);
+            }
+        }
 
         public const int NUM_VARIANTS = 2;  // Number of variants to generate, a variant falls back to 0 if no images found.
 
@@ -78,6 +136,7 @@ namespace VillagerVariety
         public const string GET_ARCHIVE_CURRENT_CLIMATE = "getArchiveCurrentClimate"; // Returns the current climate variant for a given archive
         public const string GET_IMAGE_NAME = "getImageName";
         public const string GET_IMAGE_NAME_CLIMATE = "getImageNameClimate"; // Like getImageName but you can specify a custom climate
+        public const string GET_ARCHIVE_PREFIX = "getArchivePrefix";
 
         public readonly static string[] SEASON_STRS = { "f", "p", "m", "w" };
 
@@ -111,6 +170,35 @@ namespace VillagerVariety
                         {
                             object[] paramArr = (object[])data;
                             callBack?.Invoke(GET_IMAGE_NAME_CLIMATE, GetImageName((int)paramArr[0], (int)paramArr[1], (int)paramArr[2], (int)paramArr[3], (int)paramArr[4], "", (string)paramArr[5]));
+                            break;
+                        }
+
+                    case GET_ARCHIVE_PREFIX:
+                        {
+                            int archive = (int)data;
+                            if (GUARD_TEXTURES.Contains(archive))
+                            {
+                                string variant = GetRegionalVariant(archive);
+                                if (string.IsNullOrEmpty(variant))
+                                {
+                                    variant = GetNationalVariant(archive);
+                                }
+
+                                if (string.IsNullOrEmpty(variant))
+                                {
+                                    callBack?.Invoke(GET_ARCHIVE_PREFIX, $"{archive}_");
+                                }
+                                else
+                                {
+                                    callBack?.Invoke(GET_ARCHIVE_PREFIX, $"{archive}.{variant}_");
+                                }
+                            }
+                            else
+                            {
+                                // TODO: complete
+                                callBack?.Invoke(GET_ARCHIVE_PREFIX, $"{archive}_");
+                            }
+
                             break;
                         }
 

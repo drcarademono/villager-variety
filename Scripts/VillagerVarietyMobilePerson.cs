@@ -5,6 +5,7 @@
 
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using DaggerfallConnect;
 using DaggerfallConnect.Arena2;
@@ -203,15 +204,6 @@ namespace VillagerVariety
             // Setup person rendering, selecting random variant and setting current season
             int archive = textures[personVariant];
             
-// Carademono: Testing lines to make all mobile NPCs a specific sprite - uncomment as required while testing (note: talk face wont match)
-            if (!isGuard)
-            {
-                //archive = 396;
-                //personFaceRecordId = 158;
-                //variant = 1;
-                //season = "";
-            }
-
             CacheRecordSizesAndFrames(archive);
 
             // SetPerson is called twice for our climate variants (see VillagerVarietyPopulationManagerProxy)
@@ -253,11 +245,101 @@ namespace VillagerVariety
         #endregion
 
         #region Private Methods
+        private Material LoadGuardVariant(int archive, MeshFilter meshFilter, ref MobileBillboardImportedTextures importedTextures)
+        {
+            if(VillagerVarietyMod.GUARD_TEXTURES.Contains(archive))
+            {
+                // Make material
+                Material material = MaterialReader.CreateStandardMaterial(MaterialReader.CustomBlendMode.Cutout);
+
+                string variant = VillagerVarietyMod.GetRegionalVariant(archive);
+                if(string.IsNullOrEmpty(variant))
+                {
+                    variant = VillagerVarietyMod.GetNationalVariant(archive);
+                }
+
+                string firstFrameName = VillagerVarietyMod.GetGuardImageName(archive, 0, 0, variant);
+                if (textureCache.TryGetValue(firstFrameName, out importedTextures.Albedo))
+                {
+                    if (emmisionCache.TryGetValue(firstFrameName, out importedTextures.EmissionMaps))
+                    {
+                        importedTextures.IsEmissive = true;
+                        material.EnableKeyword(EMISSION);
+                        material.SetColor(EMISSIONCOLOR, Color.white);
+                    }
+                }
+                else
+                {
+                    Texture2D _;
+                    if (ModManager.Instance.TryGetAsset(firstFrameName, clone: false, out _))
+                    {
+                        // Check whether there are emission textures (must exist for first frame)
+                        if (importedTextures.IsEmissive = ModManager.Instance.TryGetAsset(firstFrameName + EMISSION, clone: false, out _))
+                        {
+                            material.EnableKeyword(EMISSION);
+                            material.SetColor(EMISSIONCOLOR, Color.white);
+                        }
+
+                        // Load texture file to get record and frame count
+                        string fileName = TextureFile.IndexToFileName(archive);
+                        var textureFile = new TextureFile(Path.Combine(DaggerfallUnity.Instance.Arena2Path, fileName), FileUsage.UseMemory, true);
+
+                        // Import all textures in this archive
+                        importedTextures.Albedo = new Texture2D[textureFile.RecordCount][];
+                        importedTextures.EmissionMaps = importedTextures.IsEmissive ? new Texture2D[textureFile.RecordCount][] : null;
+
+                        for (int record = 0; record < textureFile.RecordCount; record++)
+                        {
+                            int frames = textureFile.GetFrameCount(record);
+                            var frameTextures = new Texture2D[frames];
+                            var frameEmissionMaps = importedTextures.IsEmissive ? new Texture2D[frames] : null;
+
+                            for (int frame = 0; frame < frames; frame++)
+                            {
+                                string assetName = VillagerVarietyMod.GetGuardImageName(archive, record, frame, variant);
+
+                                bool found = ModManager.Instance.TryGetAsset(assetName, clone: false, out frameTextures[frame]);
+
+                                if (!found)
+                                    frameTextures[frame] = ImageReader.GetTexture(fileName, record, frame, hasAlpha: true);   // Use vanilla texture/override if no custom frame
+
+                                if (frameEmissionMaps != null)
+                                {
+                                    ModManager.Instance.TryGetAsset(VillagerVarietyMod.GetGuardImageName(archive, record, frame, variant) + EMISSION
+                                        , clone: false, out Texture2D emissTex);
+                                    frameEmissionMaps[frame] = emissTex ?? frameTextures[frame];
+                                }
+                            }
+
+                            importedTextures.Albedo[record] = frameTextures;
+                            if (importedTextures.EmissionMaps != null)
+                                importedTextures.EmissionMaps[record] = frameEmissionMaps;
+                        }
+                    }
+                }
+
+                // Add loaded textures to the cache
+                textureCache[firstFrameName] = importedTextures.Albedo;
+                if (importedTextures.EmissionMaps != null)
+                    emmisionCache[firstFrameName] = importedTextures.EmissionMaps;
+
+                // Update UV map and indicate imported textures should be used
+                SetUv(meshFilter);
+                importedTextures.HasImportedTextures = true;
+
+                return material;
+            }
+
+            return null;
+        }
+
                 
         private Material LoadVillagerVariant(int archive, int faceRecord, int variant, string season, MeshFilter meshFilter, ref MobileBillboardImportedTextures importedTextures)
         {
             if (isUsingGuardTexture)
-                return null;
+            {
+                return LoadGuardVariant(archive, meshFilter, ref importedTextures);
+            }
 
             string climateVariant = VillagerVarietyMod.GetClimateVariant();
 
@@ -278,12 +360,8 @@ namespace VillagerVariety
                 }
             }
             else
-            {
-                // Load texture file to get record and frame count
-                string fileName = TextureFile.IndexToFileName(archive);
-                var textureFile = new TextureFile(Path.Combine(DaggerfallUnity.Instance.Arena2Path, fileName), FileUsage.UseMemory, true);
+            {                
                 Texture2D _;
-
                 // Check if this climate, season, and variant is available. If not, remove season, then climate, then set variant to 0
                 if (!ModManager.Instance.TryGetAsset(firstFrameName, clone: false, out _) && !string.IsNullOrEmpty(season))
                 {
@@ -315,6 +393,10 @@ namespace VillagerVariety
                     material.EnableKeyword(EMISSION);
                     material.SetColor(EMISSIONCOLOR, Color.white);
                 }
+
+                // Load texture file to get record and frame count
+                string fileName = TextureFile.IndexToFileName(archive);
+                var textureFile = new TextureFile(Path.Combine(DaggerfallUnity.Instance.Arena2Path, fileName), FileUsage.UseMemory, true);
 
                 // Import all textures in this archive
                 importedTextures.Albedo = new Texture2D[textureFile.RecordCount][];
@@ -351,7 +433,6 @@ namespace VillagerVariety
                     if (importedTextures.EmissionMaps != null)
                         importedTextures.EmissionMaps[record] = frameEmissionMaps;
                 }
-                Debug.LogFormat("Loaded villager variant: {0:000}.{1}.{2}{3}", archive, faceRecord, variant, season);
 
                 // Add loaded textures to the cache
                 textureCache[firstFrameName] = importedTextures.Albedo;
