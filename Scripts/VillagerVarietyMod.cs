@@ -119,7 +119,7 @@ namespace VillagerVariety
         }
         public static string GetGuardImageName(int archive, int record, int frame, string variant)
         {
-            if (string.IsNullOrEmpty(variant))
+            if (!string.IsNullOrEmpty(variant))
             {
                 return string.Format("{0:000}.{3}_{1}-{2}", archive, record, frame, variant);
             }
