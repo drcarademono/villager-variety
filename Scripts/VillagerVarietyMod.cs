@@ -71,8 +71,12 @@ namespace VillagerVariety
             {
                 switch(GameManager.Instance.PlayerGPS.CurrentRegionIndex)
                 {
+                    case 17: // Daggerfall
+                        return "17";
                     case 20: // Sentinel
                         return "20";
+                    case 23: // Wayrest
+                        return "23";
                 }
             }
 
@@ -85,8 +89,16 @@ namespace VillagerVariety
             {
                 if (IsInHammerfell())
                     return "HF";
-            }
 
+                switch (GameManager.Instance.PlayerGPS.CurrentRegionIndex)
+                {
+                    case 16: // Wrothgarian Mountains
+                    case 33: // Menevia
+                    case 38: // Phrygias
+                    case 57: // Gavaudon
+                        return "WR";
+                }
+            }
             return null;
         }
 
