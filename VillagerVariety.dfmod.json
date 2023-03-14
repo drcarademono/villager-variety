@@ -1,6 +1,6 @@
 {
     "ModTitle": "Vanilla Enhanced - Villagers",
-    "ModVersion": "3.0",
+    "ModVersion": "3.2",
     "ModAuthor": "carademono, Hazelnut, & kaboissonneault",
     "ContactInfo": "forums.dfworkshop.net",
     "DFUnity_Version": "0.13.5",
@@ -8150,6 +8150,7 @@
         "Assets/Game/Mods/villager-variety/Textures/383/383.X.S0/383.X.S0_0-0.png",
         "Assets/Game/Mods/villager-variety/Textures/383/383.X.S0/383.354.S0_5-0.png",
         "Assets/Game/Mods/villager-variety/Textures/385/385.X.1/385.X.1_0-1.png",
-        "Assets/Game/Mods/villager-variety/Textures/391/391.X.0/391.288.0_0-3.png"
+        "Assets/Game/Mods/villager-variety/Textures/391/391.X.0/391.288.0_0-3.png",
+        "Assets/Game/Mods/villager-variety/VillagerVariety.dfmod.json"
     ]
 }
