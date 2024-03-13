@@ -217,7 +217,6 @@ namespace VillagerVariety
             int variant = Random.Range(0, VillagerVarietyMod.NUM_VARIANTS);
             string season = VillagerVarietyMod.SEASON_STRS[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue];
 
-            Debug.LogFormat("Setting up villager variant: {0:000}.{1}.{2}{3}", archive, personFaceRecordId, variant, season);
             AssignMeshAndMaterial(archive, personFaceRecordId, variant, season);
 
             // Setup animation state
