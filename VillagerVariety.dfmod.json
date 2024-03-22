@@ -1,9 +1,9 @@
 {
     "ModTitle": "Vanilla Enhanced - Villagers",
-    "ModVersion": "3.2",
+    "ModVersion": "3.2.3",
     "ModAuthor": "carademono, Hazelnut, & kaboissonneault",
-    "ContactInfo": "forums.dfworkshop.net",
-    "DFUnity_Version": "0.13.5",
+    "ContactInfo": "Lysandus' Tomb Discord server",
+    "DFUnity_Version": "1.0.0",
     "ModDescription": "Varied faces and outfits for the villagers of the Iliac Bay",
     "GUID": "417cf548-ece1-4fbb-a47d-2eacf0570709",
     "Files": [
