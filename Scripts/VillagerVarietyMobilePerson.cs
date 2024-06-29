@@ -169,65 +169,96 @@ namespace VillagerVariety
         /// <summary>
         /// Setup this person based on race and gender.
         /// </summary>
-        public override void SetPerson(Races race, Genders gender, int personVariant, bool isGuard, int personFaceVariant, int personFaceRecordId)
+public override void SetPerson(Races race, Genders gender, int personVariant, bool isGuard, int personFaceVariant, int personFaceRecordId)
+{
+    // Must specify a race
+    if (race == Races.None)
+        return;
+
+    // Get texture range for this race and gender
+    int[] textures = null;
+
+    isUsingGuardTexture = isGuard;
+
+    if (isGuard)
+    {
+        textures = VillagerVarietyMod.GUARD_TEXTURES;
+    }
+    else if (GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26)
+    {
+        // Use Archive 1050 for all villagers in Region 26
+        int region26Archive = 1050;
+
+        CacheRecordSizesAndFrames(region26Archive);
+
+        // SetPerson is called twice for our climate variants (see VillagerVarietyPopulationManagerProxy)
+        // Skip the first call since it's gonna be discarded anyway
+        if (!string.IsNullOrEmpty(VillagerVarietyMod.GetClimateVariant()) && !skippedFirstTexture)
         {
-            // Must specify a race
-            if (race == Races.None)
-                return;
-                                    
-            // Get texture range for this race and gender
-            int[] textures = null;
-
-            isUsingGuardTexture = isGuard;
-
-            if (isGuard)
-            {
-                textures = VillagerVarietyMod.GUARD_TEXTURES;
-            }
-            else
-            {
-                switch (race)
-                {
-                    case Races.Redguard:
-                        textures = (gender == Genders.Male) ? VillagerVarietyMod.MALE_REDGUARD_TEXTURES : VillagerVarietyMod.FEMALE_REDGUARD_TEXTURES;
-                        break;
-                    case Races.Nord:
-                        textures = (gender == Genders.Male) ? VillagerVarietyMod.MALE_NORD_TEXTURES : VillagerVarietyMod.FEMALE_NORD_TEXTURES;
-                        break;
-                    case Races.Breton:
-                    default:
-                        textures = (gender == Genders.Male) ? VillagerVarietyMod.MALE_BRETON_TEXTURES : VillagerVarietyMod.FEMALE_BRETON_TEXTURES;
-                        break;
-                }
-            }
-
-            // Setup person rendering, selecting random variant and setting current season
-            int archive = textures[personVariant];
-            
-            CacheRecordSizesAndFrames(archive);
-
-            // SetPerson is called twice for our climate variants (see VillagerVarietyPopulationManagerProxy)
-            // Skip the first call since it's gonna be discarded anyway
-            if (!string.IsNullOrEmpty(VillagerVarietyMod.GetClimateVariant()) && !skippedFirstTexture)
-            {
-                skippedFirstTexture = true;
-                return;
-            }
-
-            int variant = Random.Range(0, VillagerVarietyMod.NUM_VARIANTS);
-            string season = VillagerVarietyMod.SEASON_STRS[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue];
-
-            AssignMeshAndMaterial(archive, personFaceRecordId, variant, season);
-
-            // Setup animation state
-            moveAnims = GetStateAnims(AnimStates.Move);
-            idleAnims = GetStateAnims(AnimStates.Idle);
-            stateAnims = moveAnims;
-            animSpeed = stateAnims[0].FramePerSecond;
-            currentAnimState = AnimStates.Move;
-            lastOrientation = -1;
-            UpdateOrientation();
+            skippedFirstTexture = true;
+            return;
         }
+
+        int region26Variant = Random.Range(0, VillagerVarietyMod.NUM_VARIANTS);
+        string region26Season = VillagerVarietyMod.SEASON_STRS[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue];
+
+        AssignMeshAndMaterial(region26Archive, personFaceRecordId, region26Variant, region26Season);
+
+        // Setup animation state
+        moveAnims = GetStateAnims(AnimStates.Move);
+        idleAnims = GetStateAnims(AnimStates.Idle);
+        stateAnims = moveAnims;
+        animSpeed = stateAnims[0].FramePerSecond;
+        currentAnimState = AnimStates.Move;
+        lastOrientation = -1;
+        UpdateOrientation();
+
+        return;
+    }
+    else
+    {
+        switch (race)
+        {
+            case Races.Redguard:
+                textures = (gender == Genders.Male) ? VillagerVarietyMod.MALE_REDGUARD_TEXTURES : VillagerVarietyMod.FEMALE_REDGUARD_TEXTURES;
+                break;
+            case Races.Nord:
+                textures = (gender == Genders.Male) ? VillagerVarietyMod.MALE_NORD_TEXTURES : VillagerVarietyMod.FEMALE_NORD_TEXTURES;
+                break;
+            case Races.Breton:
+            default:
+                textures = (gender == Genders.Male) ? VillagerVarietyMod.MALE_BRETON_TEXTURES : VillagerVarietyMod.FEMALE_BRETON_TEXTURES;
+                break;
+        }
+    }
+
+    // Setup person rendering, selecting random variant and setting current season
+    int archive = textures[personVariant];
+
+    CacheRecordSizesAndFrames(archive);
+
+    // SetPerson is called twice for our climate variants (see VillagerVarietyPopulationManagerProxy)
+    // Skip the first call since it's gonna be discarded anyway
+    if (!string.IsNullOrEmpty(VillagerVarietyMod.GetClimateVariant()) && !skippedFirstTexture)
+    {
+        skippedFirstTexture = true;
+        return;
+    }
+
+    int variant = Random.Range(0, VillagerVarietyMod.NUM_VARIANTS);
+    string season = VillagerVarietyMod.SEASON_STRS[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue];
+
+    AssignMeshAndMaterial(archive, personFaceRecordId, variant, season);
+
+    // Setup animation state
+    moveAnims = GetStateAnims(AnimStates.Move);
+    idleAnims = GetStateAnims(AnimStates.Idle);
+    stateAnims = moveAnims;
+    animSpeed = stateAnims[0].FramePerSecond;
+    currentAnimState = AnimStates.Move;
+    lastOrientation = -1;
+    UpdateOrientation();
+}
 
         /// <summary>
         /// Gets billboard size.
