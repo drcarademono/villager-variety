@@ -3,6 +3,7 @@
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
 // Authors:         Hazelnut & Carademono
 
+using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
@@ -134,6 +135,9 @@ namespace VillagerVariety
             // Mobile NPC shadows if enabled
             if (DaggerfallUnity.Settings.MobileNPCShadows)
                 GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;
+
+            // Handle Talk Window change
+            DaggerfallUI.UIManager.OnWindowChange += OnWindowChange;
         }
 
         private void Update()
@@ -162,6 +166,33 @@ namespace VillagerVariety
             }
         }
 
+        private void OnWindowChange(object sender, EventArgs e)
+        {
+            if (DaggerfallUI.UIManager.TopWindow != DaggerfallUI.Instance.TalkWindow || TalkManager.Instance.StaticNPC)
+                return;
+
+            // Check if the player is in Region 26
+            if (GameManager.Instance.PlayerGPS.CurrentRegionIndex != 26)
+                return;
+
+            // Get the faceRecord from TalkManager's MobileNPC
+            int faceRecord = TalkManager.Instance.MobileNPC.PersonFaceRecordId;
+
+            // Calculate the portrait record based on the faceRecord
+            int portraitRecord = CalculatePortraitRecord(faceRecord);
+
+            // Set the NPC portrait
+            DaggerfallUI.Instance.TalkWindow.SetNPCPortrait(DaggerfallWorkshop.Game.UserInterface.DaggerfallTalkWindow.FacePortraitArchive.CommonFaces, portraitRecord);
+        }
+
+
+
+        private void OnDestroy()
+        {
+            // Unsubscribe from the event to avoid potential memory leaks
+            DaggerfallUI.UIManager.OnWindowChange -= OnWindowChange;
+        }
+
         #endregion
 
         #region Public Methods
@@ -169,110 +200,146 @@ namespace VillagerVariety
         /// <summary>
         /// Setup this person based on race and gender.
         /// </summary>
-public override void SetPerson(Races race, Genders gender, int personVariant, bool isGuard, int personFaceVariant, int personFaceRecordId)
-{
-    // Must specify a race
-    if (race == Races.None)
-        return;
-
-    // Get texture range for this race and gender
-    int[] textures = null;
-
-    isUsingGuardTexture = isGuard;
-
-    if (isGuard)
-    {
-        textures = VillagerVarietyMod.GUARD_TEXTURES;
-    }
-    else if (GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26)
-    {
-        // Use Archive 1050 for all villagers in Region 26
-        int region26Archive = 1050;
-
-        CacheRecordSizesAndFrames(region26Archive);
-
-        // SetPerson is called twice for our climate variants (see VillagerVarietyPopulationManagerProxy)
-        // Skip the first call since it's gonna be discarded anyway
-        if (!string.IsNullOrEmpty(VillagerVarietyMod.GetClimateVariant()) && !skippedFirstTexture)
+        public override void SetPerson(Races race, Genders gender, int personVariant, bool isGuard, int personFaceVariant, int personFaceRecordId)
         {
-            skippedFirstTexture = true;
-            return;
+            // Must specify a race
+            if (race == Races.None)
+                return;
+
+            // Get texture range for this race and gender
+            int[] textures = null;
+
+            isUsingGuardTexture = isGuard;
+
+            if (isGuard)
+            {
+                textures = VillagerVarietyMod.GUARD_TEXTURES;
+            }
+            else if (GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26)
+            {
+                // Use Archive 1050 for all villagers in Region 26
+                int region26Archive = 1050;
+
+                CacheRecordSizesAndFrames(region26Archive);
+
+                // SetPerson is called twice for our climate variants (see VillagerVarietyPopulationManagerProxy)
+                // Skip the first call since it's gonna be discarded anyway
+                if (!string.IsNullOrEmpty(VillagerVarietyMod.GetClimateVariant()) && !skippedFirstTexture)
+                {
+                    skippedFirstTexture = true;
+                    return;
+                }
+
+                int region26Variant = UnityEngine.Random.Range(0, VillagerVarietyMod.NUM_VARIANTS);
+                string region26Season = VillagerVarietyMod.SEASON_STRS[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue];
+
+                AssignMeshAndMaterial(region26Archive, personFaceRecordId, region26Variant, region26Season);
+
+                // Setup animation state
+                moveAnims = GetStateAnims(AnimStates.Move);
+                idleAnims = GetStateAnims(AnimStates.Idle);
+                stateAnims = moveAnims;
+                animSpeed = stateAnims[0].FramePerSecond;
+                currentAnimState = AnimStates.Move;
+                lastOrientation = -1;
+                UpdateOrientation();
+
+                return;
+            }
+            else
+            {
+                switch (race)
+                {
+                    case Races.Redguard:
+                        textures = (gender == Genders.Male) ? VillagerVarietyMod.MALE_REDGUARD_TEXTURES : VillagerVarietyMod.FEMALE_REDGUARD_TEXTURES;
+                        break;
+                    case Races.Nord:
+                        textures = (gender == Genders.Male) ? VillagerVarietyMod.MALE_NORD_TEXTURES : VillagerVarietyMod.FEMALE_NORD_TEXTURES;
+                        break;
+                    case Races.Breton:
+                    default:
+                        textures = (gender == Genders.Male) ? VillagerVarietyMod.MALE_BRETON_TEXTURES : VillagerVarietyMod.FEMALE_BRETON_TEXTURES;
+                        break;
+                }
+            }
+
+            // Setup person rendering, selecting random variant and setting current season
+            int archive = textures[personVariant];
+
+            CacheRecordSizesAndFrames(archive);
+
+            // SetPerson is called twice for our climate variants (see VillagerVarietyPopulationManagerProxy)
+            // Skip the first call since it's gonna be discarded anyway
+            if (!string.IsNullOrEmpty(VillagerVarietyMod.GetClimateVariant()) && !skippedFirstTexture)
+            {
+                skippedFirstTexture = true;
+                return;
+            }
+
+            int variant = UnityEngine.Random.Range(0, VillagerVarietyMod.NUM_VARIANTS);
+            string season = VillagerVarietyMod.SEASON_STRS[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue];
+
+            AssignMeshAndMaterial(archive, personFaceRecordId, variant, season);
+
+            // Setup animation state
+            moveAnims = GetStateAnims(AnimStates.Move);
+            idleAnims = GetStateAnims(AnimStates.Idle);
+            stateAnims = moveAnims;
+            animSpeed = stateAnims[0].FramePerSecond;
+            currentAnimState = AnimStates.Move;
+            lastOrientation = -1;
+            UpdateOrientation();
         }
 
-        int region26Variant = Random.Range(0, VillagerVarietyMod.NUM_VARIANTS);
-        string region26Season = VillagerVarietyMod.SEASON_STRS[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue];
 
-        AssignMeshAndMaterial(region26Archive, personFaceRecordId, region26Variant, region26Season);
 
-        // Setup animation state
-        moveAnims = GetStateAnims(AnimStates.Move);
-        idleAnims = GetStateAnims(AnimStates.Idle);
-        stateAnims = moveAnims;
-        animSpeed = stateAnims[0].FramePerSecond;
-        currentAnimState = AnimStates.Move;
-        lastOrientation = -1;
-        UpdateOrientation();
+                /// <summary>
+                /// Gets billboard size.
+                /// </summary>
+                /// <returns>Vector2 of billboard width and height.</returns>
+                public sealed override Vector3 GetSize()
+                {
+                    if (recordSizes == null || recordSizes.Length == 0)
+                        return Vector2.zero;
 
-        return;
-    }
-    else
-    {
-        switch (race)
+                    return recordSizes[0];
+                }
+
+                #endregion
+
+        private int CalculatePortraitRecord(int faceRecord)
         {
-            case Races.Redguard:
-                textures = (gender == Genders.Male) ? VillagerVarietyMod.MALE_REDGUARD_TEXTURES : VillagerVarietyMod.FEMALE_REDGUARD_TEXTURES;
-                break;
-            case Races.Nord:
-                textures = (gender == Genders.Male) ? VillagerVarietyMod.MALE_NORD_TEXTURES : VillagerVarietyMod.FEMALE_NORD_TEXTURES;
-                break;
-            case Races.Breton:
-            default:
-                textures = (gender == Genders.Male) ? VillagerVarietyMod.MALE_BRETON_TEXTURES : VillagerVarietyMod.FEMALE_BRETON_TEXTURES;
-                break;
-        }
-    }
+            int baseRecord;
+            int rangeStart;
 
-    // Setup person rendering, selecting random variant and setting current season
-    int archive = textures[personVariant];
+            if ((faceRecord >= 192 && faceRecord <= 215) ||
+                (faceRecord >= 216 && faceRecord <= 239) ||
+                (faceRecord >= 240 && faceRecord <= 263) ||
+                (faceRecord >= 288 && faceRecord <= 311))
+            {
+                baseRecord = 1000000;
+                if (faceRecord >= 192 && faceRecord <= 215) rangeStart = 192;
+                else if (faceRecord >= 216 && faceRecord <= 239) rangeStart = 216;
+                else if (faceRecord >= 240 && faceRecord <= 263) rangeStart = 240;
+                else rangeStart = 288;
+            }
+            else if ((faceRecord >= 24 && faceRecord <= 47) ||
+                     (faceRecord >= 73 && faceRecord <= 95))
+            {
+                baseRecord = 1000015;
+                if (faceRecord >= 24 && faceRecord <= 47) rangeStart = 24;
+                else rangeStart = 73;
+            }
+            else
+            {
+                // Default value if faceRecord doesn't match any range
+                return 1000000;
+            }
 
-    CacheRecordSizesAndFrames(archive);
-
-    // SetPerson is called twice for our climate variants (see VillagerVarietyPopulationManagerProxy)
-    // Skip the first call since it's gonna be discarded anyway
-    if (!string.IsNullOrEmpty(VillagerVarietyMod.GetClimateVariant()) && !skippedFirstTexture)
-    {
-        skippedFirstTexture = true;
-        return;
-    }
-
-    int variant = Random.Range(0, VillagerVarietyMod.NUM_VARIANTS);
-    string season = VillagerVarietyMod.SEASON_STRS[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue];
-
-    AssignMeshAndMaterial(archive, personFaceRecordId, variant, season);
-
-    // Setup animation state
-    moveAnims = GetStateAnims(AnimStates.Move);
-    idleAnims = GetStateAnims(AnimStates.Idle);
-    stateAnims = moveAnims;
-    animSpeed = stateAnims[0].FramePerSecond;
-    currentAnimState = AnimStates.Move;
-    lastOrientation = -1;
-    UpdateOrientation();
-}
-
-        /// <summary>
-        /// Gets billboard size.
-        /// </summary>
-        /// <returns>Vector2 of billboard width and height.</returns>
-        public sealed override Vector3 GetSize()
-        {
-            if (recordSizes == null || recordSizes.Length == 0)
-                return Vector2.zero;
-
-            return recordSizes[0];
+            int offset = (faceRecord - rangeStart) % 15;
+            return baseRecord + offset;
         }
 
-        #endregion
 
         #region Private Methods
         private Material LoadGuardVariant(int archive, MeshFilter meshFilter, ref MobileBillboardImportedTextures importedTextures)

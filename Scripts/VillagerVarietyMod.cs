@@ -77,6 +77,8 @@ namespace VillagerVariety
                         return "20";
                     case 23: // Wayrest
                         return "23";
+                    case 26: // Orsinium
+                        return "26";
                 }
             }
 
