@@ -220,7 +220,7 @@ namespace VillagerVariety
                 // Use Archive 1050 for all villagers in Region 26
                 int region26Archive = 1050;
 
-                CacheRecordSizesAndFrames(region26Archive);
+                CacheRecordSizesAndFramesOrsinium(region26Archive);
 
                 // SetPerson is called twice for our climate variants (see VillagerVarietyPopulationManagerProxy)
                 // Skip the first call since it's gonna be discarded anyway
@@ -266,7 +266,11 @@ namespace VillagerVariety
             // Setup person rendering, selecting random variant and setting current season
             int archive = textures[personVariant];
 
-            CacheRecordSizesAndFrames(archive);
+            if (GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
+                CacheRecordSizesAndFramesOrsinium(archive);
+            } else {
+                CacheRecordSizesAndFrames(archive);
+            }
 
             // SetPerson is called twice for our climate variants (see VillagerVarietyPopulationManagerProxy)
             // Skip the first call since it's gonna be discarded anyway
@@ -677,6 +681,67 @@ namespace VillagerVariety
             }
         }
 
+private void CacheRecordSizesAndFramesOrsinium(int textureArchive)
+{
+    // Open texture file for guards using archive 262
+    string guardPath = Path.Combine(DaggerfallUnity.Instance.Arena2Path, TextureFile.IndexToFileName(262));
+    TextureFile guardTextureFile = new TextureFile();
+
+    // Load guard texture file
+    if (!guardTextureFile.Load(guardPath, FileUsage.UseMemory, true))
+        return;
+
+    // Open original texture file
+    string path = Path.Combine(DaggerfallUnity.Instance.Arena2Path, TextureFile.IndexToFileName(textureArchive));
+    TextureFile textureFile = new TextureFile();
+
+    // Load original texture file
+    if (!textureFile.Load(path, FileUsage.UseMemory, true))
+        return;
+
+    // Cache size and scale for each record
+    recordSizes = new Vector2[textureFile.RecordCount];
+    recordFrames = new int[textureFile.RecordCount];
+    for (int i = 0; i < textureFile.RecordCount; i++)
+    {
+        if (VillagerVarietyMod.GUARD_TEXTURES.Contains(textureArchive))
+        {
+            // Handle guards using archive 262
+            DFSize guardSize = guardTextureFile.GetSize(i);
+            DFSize guardScale = guardTextureFile.GetScale(i);
+
+            Vector2 guardStartSize = new Vector2(guardSize.Width, guardSize.Height);
+
+            // Apply scale to guards
+            Vector2 guardFinalSize;
+            int guardXChange = (int)(guardSize.Width * (guardScale.Width / BlocksFile.ScaleDivisor));
+            int guardYChange = (int)(guardSize.Height * (guardScale.Height / BlocksFile.ScaleDivisor));
+            guardFinalSize.x = (guardSize.Width + guardXChange);
+            guardFinalSize.y = (guardSize.Height + guardYChange);
+
+            // Set optional scale for guards
+            TextureReplacement.SetBillboardScale(262, i, ref guardFinalSize);
+
+            // Store final size and frame count for guards
+            recordSizes[i] = guardFinalSize * MeshReader.GlobalScale;
+            recordFrames[i] = guardTextureFile.GetFrameCount(i);
+        }
+        else
+        {
+            // Handle non-guards
+            DFSize size = textureFile.GetSize(i);
+            Vector2 finalSize = new Vector2(size.Width, size.Height) * MeshReader.GlobalScale;
+
+            // Set optional scale for non-guards
+            TextureReplacement.SetBillboardScale(textureArchive, i, ref finalSize);
+
+            // Store final size and frame count for non-guards
+            recordSizes[i] = finalSize;
+            recordFrames[i] = textureFile.GetFrameCount(i);
+        }
+    }
+}
+
         private void AssignMeshAndMaterial(int textureArchive, int faceRecord, int variant, string season)
         {
             // Get mesh filter
@@ -801,83 +866,105 @@ namespace VillagerVariety
                 UpdatePerson(orientation);
         }
 
-        private void UpdatePerson(int orientation)
+private void UpdatePerson(int orientation)
+{
+    if (stateAnims == null || stateAnims.Length == 0)
+        return;
+
+    // Get mesh filter
+    if (meshFilter == null)
+        meshFilter = GetComponent<MeshFilter>();
+
+    // Idle only has a single orientation
+    if (currentAnimState == AnimStates.Idle && orientation != 0)
+        orientation = 0;
+
+    // Get person size and scale for this state
+    int record = stateAnims[orientation].Record;
+    if (record >= recordSizes.Length)
+    {
+        Debug.LogError($"UpdatePerson: record index {record} out of bounds for recordSizes array.");
+        return;
+    }
+
+    Vector2 size = recordSizes[record];
+
+    // Set mesh scale for this state
+    transform.localScale = new Vector3(size.x, size.y, 1);
+
+    // Check if orientation flip needed
+    bool flip = stateAnims[orientation].FlipLeftRight;
+
+    // Update Record/Frame texture
+    if (importedTextures.HasImportedTextures)
+    {
+        if (meshRenderer == null)
+            meshRenderer = GetComponent<MeshRenderer>();
+
+        // Check if the record and currentFrame are within bounds
+        if (record >= importedTextures.Albedo.Length || currentFrame >= importedTextures.Albedo[record].Length)
         {
-            if (stateAnims == null || stateAnims.Length == 0)
-                return;
-
-            // Get mesh filter
-            if (meshFilter == null)
-                meshFilter = GetComponent<MeshFilter>();
-
-            // Idle only has a single orientation
-            if (currentAnimState == AnimStates.Idle && orientation != 0)
-                orientation = 0;
-
-            // Get person size and scale for this state
-            int record = stateAnims[orientation].Record;
-            Vector2 size = recordSizes[record];
-
-            // Set mesh scale for this state
-            transform.localScale = new Vector3(size.x, size.y, 1);
-
-            // Check if orientation flip needed
-            bool flip = stateAnims[orientation].FlipLeftRight;
-
-            // Update Record/Frame texture
-            if (importedTextures.HasImportedTextures)
-            {
-                if (meshRenderer == null)
-                    meshRenderer = GetComponent<MeshRenderer>();
-
-                // Assign imported texture
-                meshRenderer.sharedMaterial.mainTexture = importedTextures.Albedo[record][currentFrame];
-                if (importedTextures.IsEmissive)
-                    meshRenderer.material.SetTexture(EMISSIONMAP, importedTextures.EmissionMaps[record][currentFrame]);
-
-                // Update UVs on mesh
-                Vector2[] uvs = new Vector2[4];
-                if (flip)
-                {
-                    uvs[0] = new Vector2(1, 1);
-                    uvs[1] = new Vector2(0, 1);
-                    uvs[2] = new Vector2(1, 0);
-                    uvs[3] = new Vector2(0, 0);
-                }
-                else
-                {
-                    uvs[0] = new Vector2(0, 1);
-                    uvs[1] = new Vector2(1, 1);
-                    uvs[2] = new Vector2(0, 0);
-                    uvs[3] = new Vector2(1, 0);
-                }
-                meshFilter.sharedMesh.uv = uvs;
-            }
-            else
-            {
-                // Daggerfall Atlas: Update UVs on mesh
-                Rect rect = atlasRects[atlasIndices[record].startIndex + currentFrame];
-                Vector2[] uvs = new Vector2[4];
-                if (flip)
-                {
-                    uvs[0] = new Vector2(rect.xMax, rect.yMax);
-                    uvs[1] = new Vector2(rect.x, rect.yMax);
-                    uvs[2] = new Vector2(rect.xMax, rect.y);
-                    uvs[3] = new Vector2(rect.x, rect.y);
-                }
-                else
-                {
-                    uvs[0] = new Vector2(rect.x, rect.yMax);
-                    uvs[1] = new Vector2(rect.xMax, rect.yMax);
-                    uvs[2] = new Vector2(rect.x, rect.y);
-                    uvs[3] = new Vector2(rect.xMax, rect.y);
-                }
-                meshFilter.sharedMesh.uv = uvs;
-            }
-
-            // Assign new orientation
-            lastOrientation = orientation;
+            Debug.LogError($"UpdatePerson: record index {record} or frame index {currentFrame} out of bounds for importedTextures.Albedo array.");
+            return;
         }
+
+        // Assign imported texture
+        meshRenderer.sharedMaterial.mainTexture = importedTextures.Albedo[record][currentFrame];
+        if (importedTextures.IsEmissive && record < importedTextures.EmissionMaps.Length && currentFrame < importedTextures.EmissionMaps[record].Length)
+        {
+            meshRenderer.material.SetTexture(EMISSIONMAP, importedTextures.EmissionMaps[record][currentFrame]);
+        }
+
+        // Update UVs on mesh
+        Vector2[] uvs = new Vector2[4];
+        if (flip)
+        {
+            uvs[0] = new Vector2(1, 1);
+            uvs[1] = new Vector2(0, 1);
+            uvs[2] = new Vector2(1, 0);
+            uvs[3] = new Vector2(0, 0);
+        }
+        else
+        {
+            uvs[0] = new Vector2(0, 1);
+            uvs[1] = new Vector2(1, 1);
+            uvs[2] = new Vector2(0, 0);
+            uvs[3] = new Vector2(1, 0);
+        }
+        meshFilter.sharedMesh.uv = uvs;
+    }
+    else
+    {
+        // Daggerfall Atlas: Update UVs on mesh
+        if (record >= atlasIndices.Length || atlasIndices[record].startIndex + currentFrame >= atlasRects.Length)
+        {
+            Debug.LogError($"UpdatePerson: record index {record} or frame index {currentFrame} out of bounds for atlasRects array.");
+            return;
+        }
+
+        Rect rect = atlasRects[atlasIndices[record].startIndex + currentFrame];
+        Vector2[] uvs = new Vector2[4];
+        if (flip)
+        {
+            uvs[0] = new Vector2(rect.xMax, rect.yMax);
+            uvs[1] = new Vector2(rect.x, rect.yMax);
+            uvs[2] = new Vector2(rect.xMax, rect.y);
+            uvs[3] = new Vector2(rect.x, rect.y);
+        }
+        else
+        {
+            uvs[0] = new Vector2(rect.x, rect.yMax);
+            uvs[1] = new Vector2(rect.xMax, rect.yMax);
+            uvs[2] = new Vector2(rect.x, rect.y);
+            uvs[3] = new Vector2(rect.xMax, rect.y);
+        }
+        meshFilter.sharedMesh.uv = uvs;
+    }
+
+    // Assign new orientation
+    lastOrientation = orientation;
+}
+
 
         private MobileAnimation[] GetStateAnims(AnimStates state)
         {
