@@ -459,7 +459,7 @@ namespace VillagerVariety
 
                 if (_ == null && !ModManager.Instance.TryGetAsset(firstFrameName, clone: false, out _))
                 {
-                    Debug.LogFormat("No villager variant found after fallback: {0:000}.{1}.{3}{2}{4}", archive, faceRecord, variant, climateVariant, season);
+                    //Debug.LogFormat("No villager variant found after fallback: {0:000}.{1}.{3}{2}{4}", archive, faceRecord, variant, climateVariant, season);
                     return null;
                 }
 
