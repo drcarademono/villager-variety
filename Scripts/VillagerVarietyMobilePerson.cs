@@ -205,7 +205,7 @@ namespace VillagerVariety
             // Must specify a race
             if (race == Races.None)
                 return;
-
+                                    
             // Get texture range for this race and gender
             int[] textures = null;
 
@@ -214,37 +214,7 @@ namespace VillagerVariety
             if (isGuard)
             {
                 textures = VillagerVarietyMod.GUARD_TEXTURES;
-            }
-            else if (GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26)
-            {
-                // Use Archive 1050 for all villagers in Region 26
-                int region26Archive = 1050;
-
-                CacheRecordSizesAndFramesOrsinium(region26Archive);
-
-                // SetPerson is called twice for our climate variants (see VillagerVarietyPopulationManagerProxy)
-                // Skip the first call since it's gonna be discarded anyway
-                if (!string.IsNullOrEmpty(VillagerVarietyMod.GetClimateVariant()) && !skippedFirstTexture)
-                {
-                    skippedFirstTexture = true;
-                    return;
-                }
-
-                int region26Variant = UnityEngine.Random.Range(0, VillagerVarietyMod.NUM_VARIANTS);
-                string region26Season = VillagerVarietyMod.SEASON_STRS[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue];
-
-                AssignMeshAndMaterial(region26Archive, personFaceRecordId, region26Variant, region26Season);
-
-                // Setup animation state
-                moveAnims = GetStateAnims(AnimStates.Move);
-                idleAnims = GetStateAnims(AnimStates.Idle);
-                stateAnims = moveAnims;
-                animSpeed = stateAnims[0].FramePerSecond;
-                currentAnimState = AnimStates.Move;
-                lastOrientation = -1;
-                UpdateOrientation();
-
-                return;
+                Debug.Log("Setting up guard.");
             }
             else
             {
@@ -265,11 +235,17 @@ namespace VillagerVariety
 
             // Setup person rendering, selecting random variant and setting current season
             int archive = textures[personVariant];
+            
+            if (!isGuard && GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
+                archive = 1050;
+            }
 
-            if (GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
-                CacheRecordSizesAndFramesOrsinium(archive);
+            if (isGuard && GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
+                CacheRecordSizesAndFrames(262, 20);
+            } else if (isGuard) {
+                CacheRecordSizesAndFrames(archive, 20);
             } else {
-                CacheRecordSizesAndFrames(archive);
+                CacheRecordSizesAndFrames(archive, 6);
             }
 
             // SetPerson is called twice for our climate variants (see VillagerVarietyPopulationManagerProxy)
@@ -295,21 +271,19 @@ namespace VillagerVariety
             UpdateOrientation();
         }
 
+        /// <summary>
+        /// Gets billboard size.
+        /// </summary>
+        /// <returns>Vector2 of billboard width and height.</returns>
+        public sealed override Vector3 GetSize()
+        {
+            if (recordSizes == null || recordSizes.Length == 0)
+                return Vector2.zero;
 
+            return recordSizes[0];
+        }
 
-                /// <summary>
-                /// Gets billboard size.
-                /// </summary>
-                /// <returns>Vector2 of billboard width and height.</returns>
-                public sealed override Vector3 GetSize()
-                {
-                    if (recordSizes == null || recordSizes.Length == 0)
-                        return Vector2.zero;
-
-                    return recordSizes[0];
-                }
-
-                #endregion
+        #endregion
 
         private int CalculatePortraitRecord(int faceRecord)
         {
@@ -641,8 +615,9 @@ namespace VillagerVariety
             }
         }
 
-        private void CacheRecordSizesAndFrames(int textureArchive)
-        {
+    private void CacheRecordSizesAndFrames(int textureArchive, int recordCount)
+    {
+        if (textureArchive < 512) {
             // Open texture file
             string path = Path.Combine(DaggerfallUnity.Instance.Arena2Path, TextureFile.IndexToFileName(textureArchive));
             TextureFile textureFile = new TextureFile();
@@ -652,9 +627,11 @@ namespace VillagerVariety
                 return;
 
             // Cache size and scale for each record
-            recordSizes = new Vector2[textureFile.RecordCount];
-            recordFrames = new int[textureFile.RecordCount];
-            for (int i = 0; i < textureFile.RecordCount; i++)
+            //int recordCount = 6; // Handling only records 0 to 5
+            recordSizes = new Vector2[recordCount];
+            recordFrames = new int[recordCount];
+
+            for (int i = 0; i < recordCount; i++)
             {
                 // Get size and scale of this texture
                 DFSize size = textureFile.GetSize(i);
@@ -664,6 +641,8 @@ namespace VillagerVariety
                 Vector2 startSize;
                 startSize.x = size.Width;
                 startSize.y = size.Height;
+                Debug.Log($"Texture Size Width: {size.Width}, Height {size.Height}, Record: {i}");
+
 
                 // Apply scale
                 Vector2 finalSize;
@@ -679,68 +658,45 @@ namespace VillagerVariety
                 recordSizes[i] = finalSize * MeshReader.GlobalScale;
                 recordFrames[i] = textureFile.GetFrameCount(i);
             }
-        }
-
-private void CacheRecordSizesAndFramesOrsinium(int textureArchive)
-{
-    // Open texture file for guards using archive 262
-    string guardPath = Path.Combine(DaggerfallUnity.Instance.Arena2Path, TextureFile.IndexToFileName(262));
-    TextureFile guardTextureFile = new TextureFile();
-
-    // Load guard texture file
-    if (!guardTextureFile.Load(guardPath, FileUsage.UseMemory, true))
-        return;
-
-    // Open original texture file
-    string path = Path.Combine(DaggerfallUnity.Instance.Arena2Path, TextureFile.IndexToFileName(textureArchive));
-    TextureFile textureFile = new TextureFile();
-
-    // Load original texture file
-    if (!textureFile.Load(path, FileUsage.UseMemory, true))
-        return;
-
-    // Cache size and scale for each record
-    recordSizes = new Vector2[textureFile.RecordCount];
-    recordFrames = new int[textureFile.RecordCount];
-    for (int i = 0; i < textureFile.RecordCount; i++)
-    {
-        if (VillagerVarietyMod.GUARD_TEXTURES.Contains(textureArchive))
+        } else
         {
-            // Handle guards using archive 262
-            DFSize guardSize = guardTextureFile.GetSize(i);
-            DFSize guardScale = guardTextureFile.GetScale(i);
+            // Initialize arrays for record sizes and frames
+            //int recordCount = 6; // Handling only records 0 to 5
+            recordSizes = new Vector2[recordCount];
+            recordFrames = new int[recordCount];
 
-            Vector2 guardStartSize = new Vector2(guardSize.Width, guardSize.Height);
+            for (int i = 0; i < recordCount; i++)
+            {
+                // Try to import the texture for the current record
+                if (TextureReplacement.TryImportTexture(textureArchive, i, out Texture2D[] texFrames) && texFrames.Length > 0)
+                {
+                    // Use the imported texture's size
+                    Texture2D texture = texFrames[0]; // Always use frame 0
+                    Vector2 finalSize = new Vector2(texture.width, texture.height);
 
-            // Apply scale to guards
-            Vector2 guardFinalSize;
-            int guardXChange = (int)(guardSize.Width * (guardScale.Width / BlocksFile.ScaleDivisor));
-            int guardYChange = (int)(guardSize.Height * (guardScale.Height / BlocksFile.ScaleDivisor));
-            guardFinalSize.x = (guardSize.Width + guardXChange);
-            guardFinalSize.y = (guardSize.Height + guardYChange);
+                    // Set optional scale for the imported texture
+                    TextureReplacement.SetBillboardScale(textureArchive, i, ref finalSize);
 
-            // Set optional scale for guards
-            TextureReplacement.SetBillboardScale(262, i, ref guardFinalSize);
+                    // Store the final size and frame count for the imported texture
+                    recordSizes[i] = finalSize * MeshReader.GlobalScale;
+                    recordFrames[i] = texFrames.Length;
 
-            // Store final size and frame count for guards
-            recordSizes[i] = guardFinalSize * MeshReader.GlobalScale;
-            recordFrames[i] = guardTextureFile.GetFrameCount(i);
-        }
-        else
-        {
-            // Handle non-guards
-            DFSize size = textureFile.GetSize(i);
-            Vector2 finalSize = new Vector2(size.Width, size.Height) * MeshReader.GlobalScale;
+                    Debug.Log($"Cached imported size for record {i}: {finalSize}");
+                }
+                else
+                {
+                    // Handle the case where the texture is not found
+                    Debug.LogError($"Failed to import texture for archive {textureArchive}, record {i}");
 
-            // Set optional scale for non-guards
-            TextureReplacement.SetBillboardScale(textureArchive, i, ref finalSize);
-
-            // Store final size and frame count for non-guards
-            recordSizes[i] = finalSize;
-            recordFrames[i] = textureFile.GetFrameCount(i);
+                    // Default to a size of (0, 0) and frame count of 1 if texture is not found
+                    recordSizes[i] = Vector2.zero;
+                    recordFrames[i] = 1;
+                }
+            }
         }
     }
-}
+
+
 
         private void AssignMeshAndMaterial(int textureArchive, int faceRecord, int variant, string season)
         {
