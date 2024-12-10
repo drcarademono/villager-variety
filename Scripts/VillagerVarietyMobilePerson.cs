@@ -236,8 +236,10 @@ namespace VillagerVariety
             // Setup person rendering, selecting random variant and setting current season
             int archive = textures[personVariant];
             
-            if (!isGuard && GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
+            if (!isGuard && gender == Genders.Male && GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
                 archive = 1050;
+            } else if (!isGuard && gender != Genders.Male && GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
+                archive = 1053;
             }
 
             if (isGuard && GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
