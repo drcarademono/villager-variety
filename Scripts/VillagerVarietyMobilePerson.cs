@@ -214,7 +214,7 @@ namespace VillagerVariety
             if (isGuard)
             {
                 textures = VillagerVarietyMod.GUARD_TEXTURES;
-                Debug.Log("Setting up guard.");
+                //Debug.Log("Setting up guard.");
             }
             else
             {
@@ -237,9 +237,9 @@ namespace VillagerVariety
             int archive = textures[personVariant];
             
             if (!isGuard && gender == Genders.Male && GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
-                archive = 1050;
+                archive = 10050;
             } else if (!isGuard && gender != Genders.Male && GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
-                archive = 1053;
+                archive = 10053;
             }
 
             if (isGuard && GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
@@ -643,7 +643,7 @@ namespace VillagerVariety
                 Vector2 startSize;
                 startSize.x = size.Width;
                 startSize.y = size.Height;
-                Debug.Log($"Texture Size Width: {size.Width}, Height {size.Height}, Record: {i}");
+                //Debug.Log($"Texture Size Width: {size.Width}, Height {size.Height}, Record: {i}");
 
 
                 // Apply scale
@@ -683,7 +683,7 @@ namespace VillagerVariety
                     recordSizes[i] = finalSize * MeshReader.GlobalScale;
                     recordFrames[i] = texFrames.Length;
 
-                    Debug.Log($"Cached imported size for record {i}: {finalSize}");
+                    //Debug.Log($"Cached imported size for record {i}: {finalSize}");
                 }
                 else
                 {
