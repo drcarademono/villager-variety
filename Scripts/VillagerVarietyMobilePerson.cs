@@ -261,6 +261,17 @@ namespace VillagerVariety
             int variant = UnityEngine.Random.Range(0, VillagerVarietyMod.NUM_VARIANTS);
             string season = VillagerVarietyMod.SEASON_STRS[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue];
 
+            if (GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26)
+            {
+                var npcData = GetComponentInParent<MobilePersonNPC>();
+                if (npcData != null)
+                {
+                    string orcName = OrsiniumNameHelper
+                        .OrcName(gender);
+                    npcData.NameNPC = orcName;
+                }
+            }
+
             AssignMeshAndMaterial(archive, personFaceRecordId, variant, season);
 
             // Setup animation state

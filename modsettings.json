@@ -1,0 +1,49 @@
+{
+    "Version": "null",
+    "Sections": [
+        {
+            "Name": "Population Density",
+            "Description": "Population density settings for Vanilla Enhanced - Villagers",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Min": 1,
+                    "Max": 100,
+                    "Value": 3,
+                    "Name": "FarmPopulationDensity",
+                    "Description": "Sets the villager population density in farms",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 1,
+                    "Max": 100,
+                    "Value": 10,
+                    "Name": "VillagePopulationDensity",
+                    "Description": "Sets the villager population density in villages",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 1,
+                    "Max": 100,
+                    "Value": 30,
+                    "Name": "TownPopulationDensity",
+                    "Description": "Sets the villager population density in towns",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 1,
+                    "Max": 100,
+                    "Value": 60,
+                    "Name": "CityPopulationDensity",
+                    "Description": "Sets the villager population density in cities",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                }
+            ],
+            "$version": "v1"
+        }
+    ]
+}

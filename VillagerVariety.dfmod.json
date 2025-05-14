@@ -1,6 +1,6 @@
 {
     "ModTitle": "Vanilla Enhanced - Villagers",
-    "ModVersion": "3.4.7",
+    "ModVersion": "3.4.9",
     "ModAuthor": "carademono, Hazelnut, & kaboissonneault",
     "ContactInfo": "Lysandus' Tomb Discord server",
     "DFUnity_Version": "1.0.0",
@@ -8266,7 +8266,9 @@
         "Assets/Game/Mods/villager-variety/Textures/10050/10050_2-1.png",
         "Assets/Game/Mods/villager-variety/Textures/10050/10050_2-2.png",
         "Assets/Game/Mods/villager-variety/Textures/10050/10050_3-1.png",
-        "Assets/Game/Mods/villager-variety/Textures/10050/10050_0-1.png"
+        "Assets/Game/Mods/villager-variety/Textures/10050/10050_0-1.png",
+        "Assets/Game/Mods/villager-variety/modsettings.json",
+        "Assets/Game/Mods/orsinium/Scripts/OrsiniumNameHelper.cs"
     ],
     "Dependencies": [
         {

@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Linq;
 using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Utility.ModSupport;
+using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 using DaggerfallWorkshop;
 using DaggerfallConnect;
 using DaggerfallConnect.Arena2;
@@ -13,7 +14,6 @@ namespace VillagerVariety
         private static Mod mod;
         public static Mod Mod { get { return mod; } }
 
-
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams)
         {
@@ -24,6 +24,22 @@ namespace VillagerVariety
             go.AddComponent<VillagerVarietyMod>();
 
             mod.IsReady = true;
+        }
+
+        void Awake()
+        {
+            ModSettings settings = mod.GetSettings();
+            int farmPopulationDensity = settings.GetInt("Population Density", "FarmPopulationDensity");
+            int villagePopulationDensity = settings.GetInt("Population Density", "VillagePopulationDensity");
+            int townPopulationDensity = settings.GetInt("Population Density", "TownPopulationDensity");
+            int cityPopulationDensity = settings.GetInt("Population Density", "CityPopulationDensity");
+
+            VillagerVarietyPopulationManagerProxy.SetDensities(
+                farmPopulationDensity,    // → farmDensity
+                villagePopulationDensity, // → villageDensity
+                townPopulationDensity,    // → townDensity
+                cityPopulationDensity     // → cityDensity
+            );
         }
 
         private void Start()
