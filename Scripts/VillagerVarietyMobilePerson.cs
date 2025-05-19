@@ -168,24 +168,28 @@ namespace VillagerVariety
 
         private void OnWindowChange(object sender, EventArgs e)
         {
-            if (DaggerfallUI.UIManager.TopWindow != DaggerfallUI.Instance.TalkWindow || TalkManager.Instance.StaticNPC)
+            // 1) only when the talk window is open
+            if (DaggerfallUI.UIManager.TopWindow != DaggerfallUI.Instance.TalkWindow)
                 return;
 
-            // Check if the player is in Region 26
+            // 2) only if the *current* talk target is a Mobile NPC
+            if (TalkManager.Instance.CurrentNPCType != TalkManager.NPCType.Mobile)
+                return;
+
+            // Only in region 26
             if (GameManager.Instance.PlayerGPS.CurrentRegionIndex != 26)
                 return;
 
-            // Get the faceRecord from TalkManager's MobileNPC
-            int faceRecord = TalkManager.Instance.MobileNPC.PersonFaceRecordId;
+            var mobileNPC = TalkManager.Instance.MobileNPC;
 
-            // Calculate the portrait record based on the faceRecord
+            // Now this will actually run when you shift from a static to a mobile talk target
+            int faceRecord = mobileNPC.PersonFaceRecordId;
             int portraitRecord = CalculatePortraitRecord(faceRecord);
 
-            // Set the NPC portrait
-            DaggerfallUI.Instance.TalkWindow.SetNPCPortrait(DaggerfallWorkshop.Game.UserInterface.DaggerfallTalkWindow.FacePortraitArchive.CommonFaces, portraitRecord);
+            DaggerfallUI.Instance.TalkWindow.SetNPCPortrait(
+                DaggerfallWorkshop.Game.UserInterface.DaggerfallTalkWindow.FacePortraitArchive.CommonFaces,
+                portraitRecord);
         }
-
-
 
         private void OnDestroy()
         {
@@ -260,17 +264,6 @@ namespace VillagerVariety
 
             int variant = UnityEngine.Random.Range(0, VillagerVarietyMod.NUM_VARIANTS);
             string season = VillagerVarietyMod.SEASON_STRS[(int)DaggerfallUnity.Instance.WorldTime.Now.SeasonValue];
-
-            if (GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26)
-            {
-                var npcData = GetComponentInParent<MobilePersonNPC>();
-                if (npcData != null)
-                {
-                    string orcName = OrsiniumNameHelper
-                        .OrcName(gender);
-                    npcData.NameNPC = orcName;
-                }
-            }
 
             AssignMeshAndMaterial(archive, personFaceRecordId, variant, season);
 

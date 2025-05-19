@@ -8267,8 +8267,7 @@
         "Assets/Game/Mods/villager-variety/Textures/10050/10050_2-2.png",
         "Assets/Game/Mods/villager-variety/Textures/10050/10050_3-1.png",
         "Assets/Game/Mods/villager-variety/Textures/10050/10050_0-1.png",
-        "Assets/Game/Mods/villager-variety/modsettings.json",
-        "Assets/Game/Mods/orsinium/Scripts/OrsiniumNameHelper.cs"
+        "Assets/Game/Mods/villager-variety/modsettings.json"
     ],
     "Dependencies": [
         {
