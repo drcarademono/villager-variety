@@ -176,19 +176,22 @@ namespace VillagerVariety
             if (TalkManager.Instance.CurrentNPCType != TalkManager.NPCType.Mobile)
                 return;
 
-            // Only in region 26
-            if (GameManager.Instance.PlayerGPS.CurrentRegionIndex != 26)
-                return;
+            if (VillagerVarietyMod.OBttOModEnabled)
+            {
+                // Only in region 26
+                if (GameManager.Instance.PlayerGPS.CurrentRegionIndex != 26)
+                    return;
 
-            var mobileNPC = TalkManager.Instance.MobileNPC;
+                var mobileNPC = TalkManager.Instance.MobileNPC;
 
-            // Now this will actually run when you shift from a static to a mobile talk target
-            int faceRecord = mobileNPC.PersonFaceRecordId;
-            int portraitRecord = CalculatePortraitRecord(faceRecord);
+                // Now this will actually run when you shift from a static to a mobile talk target
+                int faceRecord = mobileNPC.PersonFaceRecordId;
+                int portraitRecord = CalculatePortraitRecord(faceRecord);
 
-            DaggerfallUI.Instance.TalkWindow.SetNPCPortrait(
-                DaggerfallWorkshop.Game.UserInterface.DaggerfallTalkWindow.FacePortraitArchive.CommonFaces,
-                portraitRecord);
+                DaggerfallUI.Instance.TalkWindow.SetNPCPortrait(
+                    DaggerfallWorkshop.Game.UserInterface.DaggerfallTalkWindow.FacePortraitArchive.CommonFaces,
+                    portraitRecord);
+            }
         }
 
         private void OnDestroy()
@@ -240,13 +243,16 @@ namespace VillagerVariety
             // Setup person rendering, selecting random variant and setting current season
             int archive = textures[personVariant];
             
-            if (!isGuard && gender == Genders.Male && GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
-                archive = 10050;
-            } else if (!isGuard && gender != Genders.Male && GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
-                archive = 10053;
+            if (VillagerVarietyMod.OBttOModEnabled)
+            {
+                if (!isGuard && gender == Genders.Male && GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
+                    archive = 10050;
+                } else if (!isGuard && gender != Genders.Male && GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
+                    archive = 10053;
+                }
             }
 
-            if (isGuard && GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
+            if (VillagerVarietyMod.OBttOModEnabled && isGuard && GameManager.Instance.PlayerGPS.CurrentRegionIndex == 26) {
                 CacheRecordSizesAndFrames(262, 20);
             } else if (isGuard) {
                 CacheRecordSizesAndFrames(archive, 20);

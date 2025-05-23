@@ -14,6 +14,9 @@ namespace VillagerVariety
         private static Mod mod;
         public static Mod Mod { get { return mod; } }
 
+	    private static Mod OBttOMod;
+	    public static bool OBttOModEnabled;
+
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams)
         {
@@ -22,6 +25,12 @@ namespace VillagerVariety
 
             var go = new GameObject(mod.Title);
             go.AddComponent<VillagerVarietyMod>();
+
+		    OBttOMod = ModManager.Instance.GetModFromGUID("cfb09fd1-e525-40eb-bcf9-18b9abdebe46");
+		    if (OBttOMod != null && OBttOMod.Enabled)
+		    {
+			    OBttOModEnabled = true;
+		    }
 
             mod.IsReady = true;
         }
@@ -94,7 +103,9 @@ namespace VillagerVariety
                     case 23: // Wayrest
                         return "23";
                     case 26: // Orsinium
-                        return "26";
+                        if (OBttOModEnabled)
+                            return "26";
+                        break;
                 }
             }
 
